@@ -1,0 +1,22 @@
+{
+  "rules": {
+    "users": {
+      "$userid": {
+        ".read": "$userid == auth.userid",
+        "sparks": {
+          ".write": "$userid == auth.userid"
+        },
+        "stream": {
+          "$sparkid": {
+            ".write": "data.val() == null && ()"
+          }
+        }
+      }
+    },
+    "sparks": {
+      "$sparkid": {
+
+      }
+    }
+  }
+}
