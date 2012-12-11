@@ -7,10 +7,10 @@
       }
     },
     "users": {
-      ".read": "true",
       "$userid": {
+        ".read": "$userid == auth.userid",
+        ".write": "$userid == auth.userid",
         "following": {
-          ".write": "$userid == auth.userid",
           "$followerid": {
             ".validate": "newData.isBoolean() && root.child('people').child($followerid).val() == true"
           }
@@ -21,14 +21,13 @@
           }
         },
         "sparks": {
-          ".read": "root.child('users').child($userid).child('followers').child(auth.userid).val() == true",
-          ".write": "$userid == auth.userid"
+          ".read": "root.child('users').child($userid).child('followers').child(auth.userid).val() == true"
         },
         "stream": {
-          ".read": "$userid == auth.userid",
-          ".write": "$userid == auth.userid || root.child('users').child($userid).child('following').child(auth.userid).val() == true",
+          ".write": "root.child('users').child($userid).child('following').child(auth.userid).val() == true",
           "$sparkid": {
-            ".validate": "data.val() == null && ($userid == auth.userid || root.child('sparks').child($sparkid).child('author').val() == auth.userid)"
+            ".write": "root.child('sparks').child($sparkid).child('author').val() == auth.userid",
+            ".validate": "data.val() == null"
           }
         }
       }
