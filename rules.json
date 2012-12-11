@@ -1,5 +1,11 @@
 {
   "rules": {
+    "people": {
+      ".read": "true",
+      "$userid": {
+        ".write": "$userid == auth.userid"
+      }
+    },
     "users": {
       "$userid": {
         ".read": "$userid == auth.userid",
@@ -29,6 +35,7 @@
       }
     },
     "sparks": {
+      ".read": "true",
       "$sparkid": {
         ".write": "data.val() == null",
         ".validate": "newData.hasChildren(['author', 'content'])",
@@ -36,7 +43,7 @@
           ".validate": "newData.val() == auth.userid"
         },
         "content": {
-          ".validate": "newData.val() == true"
+          ".validate": "newData.isString()"
         }
       }
     }

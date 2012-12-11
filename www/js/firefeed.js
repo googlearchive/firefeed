@@ -41,7 +41,9 @@ function onLogout() {
 }
 
 function signedIn() {
-  showSuggested();
+  firebase.child("people").child(user).set(true, function() {
+    showSuggested();
+  });
   $("#login-box").css("display", "none");
   $("#welcome-msg").html("Welcome back to FireFeed, <b>" + user + "</b>!");
   $("#content-box").css("display", "block");
@@ -59,7 +61,7 @@ function signedOut() {
 }
 
 function showSuggested() {
-  firebase.child("users").on("child_added", function(childSnap) {
+  firebase.child("people").on("child_added", function(childSnap) {
     var uid = childSnap.name();
     if (uid != user) {
       $("<li/>")
@@ -82,8 +84,16 @@ function onSparkPost() {
     content: $("#new-spark").val()
   };
 
-  var sparkRef = firebase.child("users").child(user).child("sparks");
-  sparkRef.push(spark, showPostedToast);
+  var sparkRef = firebase.child("sparks").push();
+  console.log("trying to post " + JSON.stringify(spark));
+  sparkRef.set(spark, function(success) {
+    if (success) {
+      var userSparkRef = firebase.child("users").child(user).child("sparks");
+      userSparkRef.child(sparkRef.name()).set(true, showPostedToast);
+    } else {
+      showPostedToast(false);
+    }
+  });
 }
 
 function showPostedToast(success) {
