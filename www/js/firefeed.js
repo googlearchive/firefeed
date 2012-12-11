@@ -44,6 +44,7 @@ function signedIn() {
   firebase.child("people").child(user).set(true, function() {
     showSuggested();
   });
+  updateStream();
   $("#login-box").css("display", "none");
   $("#welcome-msg").html("Welcome back to FireFeed, <b>" + user + "</b>!");
   $("#content-box").css("display", "block");
@@ -58,6 +59,24 @@ function signedOut() {
     firebase.unauth();
     firebase = null;
   }
+}
+
+function updateStream() {
+  firebase.child("users").child(user).child("stream").on("child_added", function(sparkRefSnap) {
+    if ($("#default-spark")) {
+      $("#default-spark").remove();
+    }
+    firebase.child("sparks").child(sparkRefSnap.name()).on("value", function(sparkSnap) {
+      var elId = "#spark-" + sparkSnap.name();
+      var spark = sparkSnap.val();
+      var innerHTML = "<td>" + spark.author + "</td>" + "<td>" + spark.content + "</td>";
+      if ($(elId).length) {
+        $(elId).html(innerHTML);
+      } else {
+        $("#spark-stream tr:last").after($("<tr/>", {id: elId}).html(innerHTML));
+      }
+    });
+  });
 }
 
 function showSuggested() {
@@ -82,6 +101,8 @@ function followUser(uid) {
       $("#follow" + uid).delay(500).fadeOut("slow", function() {
         $(this).remove();
       });
+      // Add to the folowers list.
+      firebase.child("users").child(uid).child("followers").child(user).set(true);
       // Copy all previous sparks.
       var myStream = firebase.child("users").child(user).child("stream");
       firebase.child("users").child(uid).child("sparks").once("value", function(sparkSnap) {
@@ -109,8 +130,17 @@ function onSparkPost() {
   var sparkRef = firebase.child("sparks").push();
   sparkRef.set(spark, function(success) {
     if (success) {
+      // Add to your own spark list.
       var userSparkRef = firebase.child("users").child(user).child("sparks");
       userSparkRef.child(sparkRef.name()).set(true, showPostedToast);
+      // Add to the stream of everyone who follows you.
+      firebase.child("users").child(user).child("followers").once("value", function(followerSnap) {
+        followerSnap.forEach(function(follower) {
+          if (follower.val()) {
+            firebase.child("users").child(follower.name()).child("stream").child(sparkRef.name()).set(true);
+          }
+        });
+      });
     } else {
       showPostedToast(false);
     }
