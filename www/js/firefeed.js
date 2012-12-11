@@ -61,13 +61,17 @@ function signedOut() {
 }
 
 function showSuggested() {
-  firebase.child("people").on("child_added", function(childSnap) {
-    var uid = childSnap.name();
-    if (uid != user) {
+  firebase.child("users").child(user).child("following").once("value", function(followSnap) {
+    var followers = Object.keys(followSnap.val() || {});
+    firebase.child("people").on("child_added", function(childSnap) {
+      var uid = childSnap.name();
+      if (uid == user || followers.indexOf(uid) >= 0) {
+        return;
+      }
       $("<li id='follow" + uid + "' />")
         .html(uid + " - <a href='#' onclick='followUser(\"" + uid + "\");'>Follow</a>")
         .appendTo("#user-list");
-    }
+    });
   });
 }
 
@@ -77,6 +81,13 @@ function followUser(uid) {
     if (success) {
       $("#follow" + uid).delay(500).fadeOut("slow", function() {
         $(this).remove();
+      });
+      // Copy all previous sparks.
+      var myStream = firebase.child("users").child(user).child("stream");
+      firebase.child("users").child(uid).child("sparks").once("value", function(sparkSnap) {
+        sparkSnap.forEach(function(spark) {
+          myStream.child(spark.name()).set(true);
+        });
       });
     }
   });
