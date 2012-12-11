@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link href="favicon.ico" rel="shortcut icon">
+  <link rel="stylesheet" href="css/style.css">
+  <title>FireFeed</title>  
+
+  <!--[if lt IE 9]><script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+  <script src="https://static.firebase.com/v0/firebase.js"></script>
+  <script src="js/firefeed.js"></script>
+</head>
+
+<body>
+  <a href="https://github.com/firebase/firefeed">
+    <img style="position: absolute; top: 0; left: 0; border: 0;"
+    src="https://s3.amazonaws.com/github/ribbons/forkme_left_orange_ff7600.png"
+    alt="Fork me on GitHub">
+  </a>
+  <div class="container">
+
+    <header class="header clearfix">
+      <div class="logo"></div>
+
+      <nav class="menu_main">
+        <ul>
+          <li class="active"><a href="#">Home</a></li>
+          <li><a href="#">About</a></li>
+          <li><a href="javascript:onLogout();">Logout</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <div class="info">
+      <article class="hero clearfix">
+        <div class="col_100">
+          <h1 id="welcome-msg">Welcome to FireFeed!</h1>
+          <p id="login-box">
+            <a href="javascript:onLogin();">
+              <img src="img/twitter-gray.png" alt="Sign in with Twitter"/>
+            </a>
+          </p>
+        </div>
+      </article>
+    </div>
+    
+    <footer class="footer clearfix">
+      <div class="copyright">(C) 2012 Firebase.</div>
+      <nav class="menu_bottom">
+        <ul>
+          <li class="active"><a href="#">A Firebase Project</a></li>
+          <li><a href="#">FAQ</a></li>
+        </ul>
+      </nav>
+    </footer>
+
+  </div>
+</body>
+</html>

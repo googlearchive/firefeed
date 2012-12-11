@@ -1,0 +1,162 @@
+/* "Simpliste" template. Renat Rafikov. http://cssr.ru/simpliste/ */
+
+@import url('reset.css');
+@import url('skin.css');
+
+
+/* Columns 
+-------
+.col_33 | .col_33 | .col_33
+.clearfix
+-------
+.col_75 | .col_25
+.clearfix
+-------
+.col_66 | .col_33
+.clearfix
+-------
+.col_50 | .col_50
+.clearfix
+-------
+.col_100
+-------
+*/
+.col_25 {
+  width:23%;
+  margin:0 2% 0 0;
+  float:left;
+}
+.col_33 {
+  width:31%;
+  margin:0 2% 0 0;
+  float:left;
+}
+.col_50 {
+  width:48%;
+  margin:0 2% 0 0;
+  float:left;
+}
+.col_66 {
+  width:64%;
+  margin:0 2% 0 0;
+  float:left;
+}
+.col_75 {
+  width:73%;
+  margin:0 2% 0 0;
+  float:left;
+}
+.col_100 {
+  width:98%;
+  margin:0 2% 0 0;
+}
+
+.col_25.wrap { width:25%; margin:0;}
+.col_33.wrap { width:33%; margin:0;}
+.col_50.wrap { width:50%; margin:0;}
+.col_66.wrap { width:66%; margin:0;}
+.col_75.wrap { width:75%; margin:0;}
+.col_100.wrap { width:100%; margin:0;}
+/* End columns */
+
+
+/* Helper classes */
+.center {text-align:center;}
+.left {text-align:left;}
+.right {text-align:right;}
+
+.img_floatleft {float:left; margin:0 10px 5px 0;}
+.img_floatright {float:right; margin:0 0 5px 10px;}
+
+.img {max-width:100%;}
+/* End helper classes */
+
+a.button { color:auto; }
+
+@media only screen and (max-width:480px) { /* Smartphone */
+  .header {
+    margin-bottom:0;
+  }
+
+  .logo{
+    display:block;
+    float:none;
+    text-align:center;
+  }
+  
+  .menu_main {
+    width:100%;
+    text-align:center;
+    float:none;
+    padding:0;
+    margin:1em 0 0 0;
+  }
+  
+  .menu_main a {
+    display:inline-block;
+    padding:7px;
+  }
+  
+  .copyright {
+    width:100%;
+    float:none;
+    text-align:center;
+  }
+
+  .footer  {
+    padding-bottom:0;
+  }
+  
+  .menu_bottom {
+    width:100%;
+    float:none;
+    text-align:center;
+    margin:1em 0 0 0;
+    padding:0;
+  }  
+  .menu_bottom a {
+    display:inline-block;
+    padding:6px;
+  }
+  
+  .form textarea {
+    width:100%;
+  }  
+  .form label {
+    padding:10px 0 8px 0;
+  }
+}
+
+
+@media only screen and (max-width:768px) { /* Tablet */
+  .col_25,
+  .col_33,
+  .col_66,
+  .col_50 ,
+  .col_75  {
+    width:98%;
+    float:none;
+  } 
+  
+  .form label {
+    padding:10px 0 8px 0;
+  }
+}
+
+
+@media print { /* Printer */
+  * { background:transparent !important; color:black !important; text-shadow:none !important; filter:none !important; -ms-filter:none !important; }
+  a, a:visited { color:#444 !important; text-decoration:underline; }
+  a[href]:after { content:" (" attr(href) ")"; }
+  abbr[title]:after { content:" (" attr(title) ")"; }
+  pre, blockquote { border:1px solid #999; page-break-inside:avoid; }
+  thead { display:table-header-group; }
+  tr, img { page-break-inside:avoid; }
+  img { max-width:100% !important; }
+  @page { margin:0.5cm; }
+  p, h2, h3 { orphans:3; widows:3; }
+  h2, h3{ page-break-after:avoid; }
+  
+  .header, .footer, .form {display:none;}
+  .col_33, .col_66, .col_50  { width:98%; float:none; } 
+}

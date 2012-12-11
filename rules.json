@@ -19,10 +19,10 @@
         },
         "stream": {
           "$sparkid": {
-            ".write": "auth.user == $userid || root.child('users').child($userid).child('follows').hasChild(auth.user) == true",
+            ".write": "auth.userid == $userid || root.child('users').child($userid).child('follows').hasChild(auth.user) == true",
             ".validate": "data.val() == null && newData.hasChildren(['userid', 'sparkid'])",
             "userid": {
-              ".validate": "newData.val() == auth.user"
+              ".validate": "newData.val() == auth.userid"
             }
           }
         }
@@ -33,7 +33,7 @@
         ".write": "data.val() == null",
         ".validate": "newData.hasChildren['author', 'content']",
         "author": {
-          ".validate": "newData.val() == auth.user"
+          ".validate": "newData.val() == auth.userid"
         },
         "content": {
           ".validate": "newData.val() == true"
