@@ -12,10 +12,10 @@
         "sparks": {
           ".write": "$userid == auth.userid"
         },
-        "follows": {
+        "following": {
           ".write": "$userid == auth.userid",
-          "$follow": {
-            ".validate": "root.child('users').child($follow).val() == true"
+          "$followerid": {
+            ".validate": "newData.isBoolean() && root.child('people').child($followerid).val() == true"
           }
         },
         "followers": {
@@ -25,7 +25,7 @@
         },
         "stream": {
           "$sparkid": {
-            ".write": "auth.userid == $userid || root.child('users').child($userid).child('follows').child(auth.userid).val() == true",
+            ".write": "auth.userid == $userid || root.child('users').child($userid).child('following').child(auth.userid).val() == true",
             ".validate": "data.val() == null && newData.hasChildren(['userid', 'sparkid'])",
             "userid": {
               ".validate": "newData.val() == auth.userid"

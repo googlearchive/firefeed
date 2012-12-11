@@ -64,9 +64,20 @@ function showSuggested() {
   firebase.child("people").on("child_added", function(childSnap) {
     var uid = childSnap.name();
     if (uid != user) {
-      $("<li/>")
-        .html(uid + " - <a onclick='followUser(\"" + uid + "\");'>Follow</a>")
+      $("<li id='follow" + uid + "' />")
+        .html(uid + " - <a href='#' onclick='followUser(\"" + uid + "\");'>Follow</a>")
         .appendTo("#user-list");
+    }
+  });
+}
+
+function followUser(uid) {
+  var ref = firebase.child("users").child(user).child("following").child(uid);
+  ref.set(true, function(success) {
+    if (success) {
+      $("#follow" + uid).delay(500).fadeOut("slow", function() {
+        $(this).remove();
+      });
     }
   });
 }
@@ -85,7 +96,6 @@ function onSparkPost() {
   };
 
   var sparkRef = firebase.child("sparks").push();
-  console.log("trying to post " + JSON.stringify(spark));
   sparkRef.set(spark, function(success) {
     if (success) {
       var userSparkRef = firebase.child("users").child(user).child("sparks");
