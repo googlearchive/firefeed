@@ -1,5 +1,5 @@
 
-describe("Initialization", function() {
+describe("Initialization:", function() {
   var firefeed = null;
 
   beforeEach(function() {

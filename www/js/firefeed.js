@@ -8,12 +8,15 @@
  *
  * @param    {string}    baseURL     The Firebase URL.
  * @param    {string}    authURL     The authentication endpoint.
+ * @param    {boolean}   newContext  Whether a new Firebase context is used.
+ *                                   (Useful for testing only)
  * @return   {Firefeed}
  */
-function Firefeed(baseURL, authURL) {
+function Firefeed(baseURL, authURL, newContext) {
   this._user = null;
   this._firebase = null;
   this._mainUser = null;
+  this._newContext = newContext || false;
 
   if (!baseURL || typeof baseURL != "string") {
     throw new Error("Invalid baseURL provided");
@@ -58,7 +61,11 @@ Firefeed.prototype.login = function(user, onComplete) {
     dataType: "json",
     success: function(data) {
       self._user = data.user;
-      var ref = new Firebase(self._baseURL);
+      var ctx;
+      if (self._newContext) {
+        ctx = new Firebase.Context();
+      }
+      var ref = new Firebase(self._baseURL, ctx);
       ref.auth(data.token, function(done) {
         if (done) {
           self._firebase = ref;
@@ -145,8 +152,9 @@ Firefeed.prototype.follow = function(user, onComplete) {
 };
 
 /**
- * Post a spark as the current user. The provided callbac will be called with
- * (err, done) where "err" will be false if the post succeeded.
+ * Post a spark as the current user. The provided callback will be called with
+ * (err, done) where "err" will be false if the post succeeded, and done will
+ * be set to the ID of the spark just posted.
  *
  * @param    {string}    content     The content of the spark in text form.
  * @param    {Function}  onComplete  The callback to call when the post is done.
@@ -159,6 +167,7 @@ Firefeed.prototype.post = function(content, onComplete) {
   // First, we add the spark to the global sparks list. push() ensures that
   // we get a unique ID for the spark that is chronologically ordered.
   var sparkRef = self._firebase.child("sparks").push();
+  var sparkRefId = sparkRef.name();
   sparkRef.set({author: self._user, content: content}, function(done) {
     if (!done) {
       onComplete(new Error("Could not post spark"), false);
@@ -167,7 +176,7 @@ Firefeed.prototype.post = function(content, onComplete) {
 
     // Now we add a "reference" to the spark we just pushed, by adding it to
     // the sparks list for the current user.
-    var streamSparkRef = self._mainUser.child("sparks").child(sparkRef.name());
+    var streamSparkRef = self._mainUser.child("sparks").child(sparkRefId);
     streamSparkRef.set(true, function(done) {
       if (!done) {
         onComplete(new Error("Could not add spark to stream"), false);
@@ -182,12 +191,12 @@ Firefeed.prototype.post = function(content, onComplete) {
             return;
           }
           var childRef = self._firebase.child("users").child(follower.name());
-          childRef.child("stream").child(sparkRef.name()).set(true);
+          childRef.child("stream").child(sparkRefId).set(true);
         });
       });
 
       // All done!
-      onComplete(false, true);
+      onComplete(false, sparkRefId);
     });
   });
 };
@@ -237,8 +246,9 @@ Firefeed.prototype.onNewSuggestedUser = function(onComplete) {
  *
  * @param    {Function}  onComplete  The callback to call whenever a new spark
  *                                   appears on the current user's stream. The
- *                                   function will be invoked with a single
- *                                   argument, an object containing the
+ *                                   function will be invoked with two arguments
+ *                                   the first of which is the spark ID and
+ *                                   the second an object containing the
  *                                   "author" and "content" properties.
  */
 Firefeed.prototype.onNewSpark = function(onComplete) {

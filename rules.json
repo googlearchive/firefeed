@@ -12,7 +12,7 @@
         ".write": "$userid == auth.userid",
         "following": {
           "$followerid": {
-            ".validate": "newData.isBoolean() && root.child('people').child($followerid).val() == true"
+            ".validate": "newData.isBoolean() && root.child('people').hasChildren([$followerid])"
           }
         },
         "followers": {
@@ -26,8 +26,7 @@
         "stream": {
           ".write": "root.child('users').child($userid).child('following').child(auth.userid).val() == true",
           "$sparkid": {
-            ".write": "root.child('sparks').child($sparkid).child('author').val() == auth.userid",
-            ".validate": "data.val() == null"
+            ".write": "root.child('sparks').child($sparkid).child('author').val() == auth.userid"
           }
         }
       }
