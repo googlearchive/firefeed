@@ -14,7 +14,15 @@ function Firefeed(baseURL, authURL) {
   this._user = null;
   this._firebase = null;
   this._mainUser = null;
+
+  if (!baseURL || typeof baseURL != "string") {
+    throw new Error("Invalid baseURL provided");
+  }
   this._baseURL = baseURL;
+
+  if (!authURL || typeof authURL != "string") {
+    throw new Error("Invalid authURL provided");
+  }
   this._authURL = authURL;
 }
 Firefeed.prototype = {
@@ -83,7 +91,7 @@ Firefeed.prototype.logout = function(onComplete) {
     type: "POST",
     url: self._authURL + "/logout",
     success: function(data) {
-      self._firebase.child("people").child(user).set("offline");
+      self._firebase.child("people").child(self._user).set("offline");
       self._firebase.unauth();
       self._firebase = null;
       self._mainUser = null;
