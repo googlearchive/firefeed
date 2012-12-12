@@ -1,11 +1,6 @@
 
-var USER = "test";
-var TIMEOUT = 1000;
-var AUTHURL = "http://localhost:5000";
-var BASEURL = "https://firefeed.firebaseio.com";
-
-describe("Initialization & Teardown", function() {
-  var firefeed;
+describe("Initialization", function() {
+  var firefeed = null;
 
   beforeEach(function() {
     firefeed = new Firefeed(BASEURL, AUTHURL);

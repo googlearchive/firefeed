@@ -221,7 +221,7 @@ Firefeed.prototype.onNewSuggestedUser = function(onComplete) {
     // if we decide that they are a suggested user.
     self._firebase.child("people").on("child_added", function(peopleSnap) {
       var user = peopleSnap.name();
-      if (user == self._user || users.indexOf(user) >= 0) {
+      if (user == self._user || followerList.indexOf(user) >= 0) {
         return;
       }
       onComplete(user);
