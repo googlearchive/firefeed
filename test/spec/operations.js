@@ -5,17 +5,18 @@ describe("Operations", function() {
 
   beforeEach(function() {
     var flag = false;
-    firefeed1 = new Firefeed(BASEURL, AUTHURL);
-    firefeed2 = new Firefeed(BASEURL, AUTHURL);
+    // We create a new context for both so we can auth independently.
+    firefeed1 = new Firefeed(BASEURL, AUTHURL, new Firebase.Context());
+    firefeed2 = new Firefeed(BASEURL, AUTHURL, new Firebase.Context());
     runs(function() {
       firefeed1.login(USER, function(err, done) {
         expect(err).toBe(false);
         expect(done).toBe(USER);
-        //firefeed2.login(USER2, function(err, done) {
-        //  expect(err).toBe(false);
-        //  expect(done).toBe(USER2);
+        firefeed2.login(USER2, function(err, done) {
+          expect(err).toBe(false);
+          expect(done).toBe(USER2);
           flag = true;
-        //});
+        });
       });
     });
     waitsFor(function() {
