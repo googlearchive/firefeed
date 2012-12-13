@@ -7,12 +7,11 @@
  * how this object is used to make sure the UI is updated as events come in.
  *
  * @param    {string}    baseURL     The Firebase URL.
- * @param    {string}    authURL     The authentication endpoint.
  * @param    {boolean}   newContext  Whether a new Firebase context is used.
  *                                   (Useful for testing only)
  * @return   {Firefeed}
  */
-function Firefeed(baseURL, authURL, newContext) {
+function Firefeed(baseURL, newContext) {
   this._user = null;
   this._firebase = null;
   this._mainUser = null;
@@ -22,11 +21,6 @@ function Firefeed(baseURL, authURL, newContext) {
     throw new Error("Invalid baseURL provided");
   }
   this._baseURL = baseURL;
-
-  if (!authURL || typeof authURL != "string") {
-    throw new Error("Invalid authURL provided");
-  }
-  this._authURL = authURL;
 }
 Firefeed.prototype = {
   _validateCallback: function _validateCallback(cb) {
@@ -38,49 +32,49 @@ Firefeed.prototype = {
     if (!str || typeof str != "string") {
       throw new Error("Invalid " + name + " provided");
     }
+  },
+  _getParameterByName: function _getParameterByName(name) {
+    var match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
+    return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
   }
 };
 
 /**
  * Login a given user. The provided callback will be called with (err, user)
- * where "err" will be false if the login succeeded. If any other methods on
- * this object are called without the login having succeeded, the behaviour
- * in undefined.
+ * where "err" will be false if the login succeeded, and "user" is set to the
+ * username. If any other methods on this object are called without the login
+ * having succeeded, the behaviour is undefined.
  *
- * @param    {string}    user        The user to login as.
+ * The login is performed using Firebase Easy Login, with Twitter as the
+ * identity provider.
+ *
  * @param    {Function}  onComplete  The callback to call when login is done.
  */
-Firefeed.prototype.login = function(user, onComplete) {
+Firefeed.prototype.login = function(onComplete) {
   var self = this;
-  self._validateString(user, "user");
   self._validateCallback(onComplete);
-  $.ajax({
-    type: "POST",
-    url: self._authURL + "/login",
-    data: {user: user || ""},
-    dataType: "json",
-    success: function(data) {
-      self._user = data.user;
-      var ctx;
-      if (self._newContext) {
-        ctx = new Firebase.Context();
-      }
-      var ref = new Firebase(self._baseURL, ctx);
-      ref.auth(data.token, function(done) {
-        if (done) {
-          self._firebase = ref;
-          self._mainUser = ref.child("users").child(user);
-          ref.child("people").child(user).set("online");
-          onComplete(false, self._user);
-        } else {
-          onComplete(new Error("Could not auth to Firebase"), false);
-        }
-      });
-    },
-    error: function(xhr, status, error) {
-      onComplete(error, null);
+  
+  var authClient = new FirebaseAuthClient("firebase", {h: "http://127.0.0.1:12000/auth", endpoint: "http://127.0.0.1:12000/auth"});
+  authClient.getOAuthCredentials("twitter", "http://127.0.0.1/firefeed/www/");
+
+  /*
+  self._user = data.user;
+  var ctx;
+  if (self._newContext) {
+    ctx = new Firebase.Context();
+  }
+  var ref = new Firebase(self._baseURL, ctx);
+  ref.auth(data.token, function(done) {
+    if (done) {
+      self._firebase = ref;
+      self._mainUser = ref.child("users").child(user);
+      ref.child("people").child(user).set("online");
+      onComplete(false, self._user);
+    } else {
+      onComplete(new Error("Could not auth to Firebase"), false);
     }
   });
+  */
 };
 
 /**

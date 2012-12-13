@@ -1,7 +1,8 @@
 
-var ff = new Firefeed("https://firefeed.firebaseio.com/", "http://localhost:5000");
+var ff = new Firefeed("http://firebase.fblocal.com:9000/");
+
 function onLogin() {
-  ff.login(prompt("Enter username", "Guest"), signedIn);
+  ff.login(signedIn);
 }
 function onLogout() {
   ff.logout(signedOut);
