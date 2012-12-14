@@ -68,6 +68,11 @@ Firefeed.prototype.login = function(silent, onComplete) {
   var self = this;
   self._validateCallback(onComplete, true);
 
+  var ref = new Firebase(
+    self._baseURL, self._newContext ? new Firebase.Context() : null
+  );
+  this._firebase = ref;
+
   // We store the Firebase token in localStorage, so if one isn't present
   // we'll assume the user hasn't logged in.
   var token = localStorage.getItem("authToken");
@@ -75,13 +80,20 @@ Firefeed.prototype.login = function(silent, onComplete) {
     onComplete(new Error("User is not logged in"), false);
     return;
   } else if (token) {
-    processToken(token);
+    // Reuse the token, and auth the Firebase.
+    ref.auth(token, function(done) {
+      if (done) {
+        finish();
+      } else {
+        onComplete(new Error("Could not auth to Firebase"), false);
+      }
+    });
     return;
   }
 
   // No token was found, and silent was set to false. We'll attempt to login
   // the user via the Facebook helper.
-  var authClient = new FirebaseAuthClient("firefeed", {
+  var authClient = new FirebaseAuthClient(ref, {
     endpoint: "https://staging-auth.firebase.com/auth"
   });
   authClient.login("facebook", function(err, token, info) {
@@ -93,30 +105,20 @@ Firefeed.prototype.login = function(silent, onComplete) {
     localStorage.setItem("userid", info.id);
     localStorage.setItem("authToken", token);
     localStorage.setItem("displayName", info.displayName);
-    processToken(token);
+    finish();
   });
 
-  function processToken(token) {
-    // Create and authenticate a new Firebase ref with the token.
-    var ref = new Firebase(
-      self._baseURL, self._newContext ? new Firebase.Context() : null
-    );
-    ref.auth(token, function(done) {
-      if (done) {
-        self._firebase = ref;
-        self._userid = localStorage.getItem("userid");
-        self._mainUser = ref.child("users").child(self._userid);
-        self._displayName = localStorage.getItem("displayName");
+  function finish() {
+    self._firebase = ref;
+    self._userid = localStorage.getItem("userid");
+    self._mainUser = ref.child("users").child(self._userid);
+    self._displayName = localStorage.getItem("displayName");
 
-        ref.child("people").child(self._userid).set({
-          displayName: self._displayName,
-          presence: "online"
-        });
-        onComplete(false, self._displayName);
-      } else {
-        onComplete(new Error("Could not auth to Firebase"), false);
-      }
+    ref.child("people").child(self._userid).set({
+      displayName: self._displayName,
+      presence: "online"
     });
+    onComplete(false, self._displayName);
   }
 };
 
@@ -284,9 +286,8 @@ Firefeed.prototype.onNewSuggestedUser = function(onComplete) {
  * @param    {Function}  onComplete  The callback to call whenever a new spark
  *                                   appears on the current user's stream. The
  *                                   function will be invoked with two
- *                                   arguments
- *                                   the first of which is the spark ID and
- *                                   the second an object containing the
+ *                                   arguments, the first of which is the spar
+ *                                   ID and the second an object containing the
  *                                   "author" and "content" properties.
  */
 Firefeed.prototype.onNewSpark = function(onComplete) {

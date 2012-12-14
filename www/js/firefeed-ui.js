@@ -65,7 +65,7 @@ function followUser(user) {
       $("#follow" + user).delay(500).fadeOut("slow", function() {
         $(this).remove();
         if ($("#recommended-list li").length == 0) {
-          $("#recommended-list").fadeOut("slow");
+          $("#recommended").fadeOut("slow");
         }
       });
       return;
