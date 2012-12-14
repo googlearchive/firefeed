@@ -1,41 +1,43 @@
 {
   "rules": {
+    // A list of users with their names on the site, readable by everyone.
     "people": {
       ".read": "true",
       "$userid": {
+        // Only the user can write their own entry into this list.
         ".write": "$userid == auth.id"
       }
     },
     "users": {
+      // The user is allowed to read and write everything in their bucket.
       "$userid": {
         ".read": "$userid == auth.id",
         ".write": "$userid == auth.id",
         "following": {
+          // Only a user that's in the "people" list can be followed.
           "$followerid": {
             ".validate": "newData.isBoolean() && root.child('people').hasChild($followerid)"
           }
         },
-        "followers": {
-          "$follower": {
-            ".write": "$follower == auth.id"
-          }
-        },
-        "sparks": {
-          ".read": "root.child('users').child($userid).child('followers').hasChild(auth.id)"
-        },
         "stream": {
+          // User A can write in user's B stream, but only if A is following B.
           ".write": "root.child('users').child($userid).child('following').hasChild(auth.id)",
           "$sparkid": {
-            ".write": "root.child('sparks').child($sparkid).child('author').val() == auth.id"
+            // And, User A can only write sparks for which they are the author.
+            ".validate": "root.child('sparks').child($sparkid).child('author').val() == auth.id"
           }
         }
       }
     },
     "sparks": {
+      // A global list of sparks, readable by anyone.
       ".read": "true",
       "$sparkid": {
+        // Modifying an existing spark is not allowed.
         ".write": "data.val() == null",
-        ".validate": "newData.hasChildren(['author', 'content'])",
+        // A spark must have all three properties.
+        ".validate": "newData.hasChildren(['author', 'displayName', 'content'])",
+        // A user can attribute a spark only to themselves.
         "author": {
           ".validate": "newData.val() == auth.id"
         },

@@ -50,13 +50,15 @@ function updateStream() {
     if ($("#default-spark").length) {
       $("#default-spark").remove();
     }
+
+    var row = $(elId);
     var elId = "#spark-" + id;
-    var innerHTML = "<td>" + spark.displayName + "</td>" + "<td>" + spark.content + "</td>";
-    if ($(elId).length) {
-      $(elId).html(innerHTML);
-    } else {
-      $("#spark-stream tr:last").after($("<tr/>", {id: elId}).html(innerHTML));
+    if (!row.length) {
+      row = $("<tr/>", {id: elId});
+      $("#spark-stream tr:first").after(row);
     }
+    row.append($("<td/>").text(spark.displayName));
+    row.append($("<td/>").text(spark.content));
   });
 }
 function followUser(user) {
