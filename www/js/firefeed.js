@@ -256,9 +256,7 @@ Firefeed.prototype.onNewSuggestedUser = function(onComplete) {
   // First, get the current list of users the current user is following,
   // and make sure it is updated as needed.
   var followerList = [];
-  var following = self._mainUser.child("following");
-
-  following.on("value", function(followSnap) {
+  self._mainUser.child("following").once("value", function(followSnap) {
     followerList = Object.keys(followSnap.val() || {});
 
     // Now, whenever a new user is added to the site, invoke the callback
