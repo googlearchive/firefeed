@@ -3,30 +3,30 @@
     "people": {
       ".read": "true",
       "$userid": {
-        ".write": "$userid == auth.userid"
+        ".write": "$userid == auth.id"
       }
     },
     "users": {
       "$userid": {
-        ".read": "$userid == auth.userid",
-        ".write": "$userid == auth.userid",
+        ".read": "$userid == auth.id",
+        ".write": "$userid == auth.id",
         "following": {
           "$followerid": {
-            ".validate": "newData.isBoolean() && root.child('people').hasChildren([$followerid])"
+            ".validate": "newData.isBoolean() && root.child('people').hasChild($followerid)"
           }
         },
         "followers": {
           "$follower": {
-            ".write": "$follower == auth.userid"
+            ".write": "$follower == auth.id"
           }
         },
         "sparks": {
-          ".read": "root.child('users').child($userid).child('followers').child(auth.userid).val() == true"
+          ".read": "root.child('users').child($userid).child('followers').hasChild(auth.id)"
         },
         "stream": {
-          ".write": "root.child('users').child($userid).child('following').child(auth.userid).val() == true",
+          ".write": "root.child('users').child($userid).child('following').hasChild(auth.id)",
           "$sparkid": {
-            ".write": "root.child('sparks').child($sparkid).child('author').val() == auth.userid"
+            ".write": "root.child('sparks').child($sparkid).child('author').val() == auth.id"
           }
         }
       }
@@ -37,7 +37,7 @@
         ".write": "data.val() == null",
         ".validate": "newData.hasChildren(['author', 'content'])",
         "author": {
-          ".validate": "newData.val() == auth.userid"
+          ".validate": "newData.val() == auth.id"
         },
         "content": {
           ".validate": "newData.isString()"

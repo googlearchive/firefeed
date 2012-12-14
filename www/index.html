@@ -5,20 +5,24 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <link href="favicon.ico" rel="shortcut icon">
   <link rel="stylesheet" href="css/style.css">
-  <title>FireFeed</title>  
+  <title>FireFeed</title>
 
   <!--[if lt IE 9]><script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
-  <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.9.2/jquery-ui.min.js"></script>
-  <script src="https://static.firebase.com/v0/firebase.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.9.2/jquery-ui.min.js"></script>
+
+  <!-- Firebase.js and auth client must be included before Firefeed -->
+  <script src="//cdn-staging.firebase.com/v0/firebase.js"></script>
+  <script src="//cdn-staging.firebase.com/v0/firebase-auth-client.js"></script>
+
   <script src="js/firefeed.js"></script>
   <script src="js/firefeed-ui.js"></script>
 </head>
 
 <body>
-  <a href="https://github.com/firebase/firefeed">
+  <a href="//github.com/firebase/firefeed">
     <img style="position: absolute; top: 0; left: 0; border: 0;"
-    src="https://s3.amazonaws.com/github/ribbons/forkme_left_orange_ff7600.png"
+    src="//s3.amazonaws.com/github/ribbons/forkme_left_orange_ff7600.png"
     alt="Fork me on GitHub">
   </a>
   <div class="container">
@@ -30,7 +34,7 @@
         <ul>
           <li class="active"><a href="#">Home</a></li>
           <li><a href="#">About</a></li>
-          <li><a href="javascript:onLogout();">Logout</a></li>
+          <li><a href="#" id="logout-button">Logout</a></li>
         </ul>
       </nav>
     </header>
@@ -39,9 +43,9 @@
       <article class="hero clearfix">
         <div class="col_100">
           <h1 id="welcome-msg">Welcome to FireFeed!</h1>
-          <p id="login-box">
-            <a href="javascript:onLogin();">
-              <img src="img/twitter-gray.png" alt="Sign in with Twitter"/>
+          <p id="login-box" style="display:none;">
+            <a id="login-button" href="#">
+              <img src="img/login-button.png" alt="Sign in with Facebook"/>
             </a>
           </p>
         </div>
@@ -69,10 +73,11 @@
             </tr>
           </table>
 
-          <h2>People you might know</h2>
-          <ul id="user-list">
+          <h2 id="recommended" style="display:none;">People you might know</h2>
+          <ul id="recommended-list">
           </ul>
         </div>
+      </article>
     </div>
 
     <footer class="footer clearfix">

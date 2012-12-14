@@ -53,6 +53,7 @@ describe("Events:", function() {
             return;
           }
           expect(spark.author).toBe(USER2);
+          expect(spark.displayName).toBe(USER2);
           expect(spark.content).toBe(content);
           flag = true;
         });

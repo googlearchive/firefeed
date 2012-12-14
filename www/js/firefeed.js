@@ -7,108 +7,135 @@
  * how this object is used to make sure the UI is updated as events come in.
  *
  * @param    {string}    baseURL     The Firebase URL.
- * @param    {string}    authURL     The authentication endpoint.
  * @param    {boolean}   newContext  Whether a new Firebase context is used.
  *                                   (Useful for testing only)
  * @return   {Firefeed}
  */
-function Firefeed(baseURL, authURL, newContext) {
-  this._user = null;
+function Firefeed(baseURL, newContext) {
+  this._userid = null;
   this._firebase = null;
   this._mainUser = null;
+  this._displayName = null;
   this._newContext = newContext || false;
 
   if (!baseURL || typeof baseURL != "string") {
     throw new Error("Invalid baseURL provided");
   }
   this._baseURL = baseURL;
-
-  if (!authURL || typeof authURL != "string") {
-    throw new Error("Invalid authURL provided");
-  }
-  this._authURL = authURL;
 }
 Firefeed.prototype = {
-  _validateCallback: function _validateCallback(cb) {
+  _validateCallback: function _validateCallback(cb, notInit) {
     if (!cb || typeof cb != "function") {
       throw new Error("Invalid onComplete callback provided");
+    }
+    if (!notInit) {
+      if (!this._userid || !this._firebase) {
+        throw new Error("Method called without a preceding login call");
+      }
     }
   },
   _validateString: function _validateString(str, name) {
     if (!str || typeof str != "string") {
       throw new Error("Invalid " + name + " provided");
     }
+  },
+  _getParameterByName: function _getParameterByName(name) {
+    var match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
+    return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
   }
 };
 
 /**
- * Login a given user. The provided callback will be called with (err, user)
- * where "err" will be false if the login succeeded. If any other methods on
- * this object are called without the login having succeeded, the behaviour
- * in undefined.
+ * Login a given user. The provided callback will be called with (err, name)
+ * where "err" will be false if the login succeeded, and "name" is set to
+ * a string suitable for greeting the user.
+ * 
+ * It is an error to call any other method on this object without a login()
+ * having succeeded.
  *
- * @param    {string}    user        The user to login as.
+ * The login is performed using Firebase Easy Login, with Facebook as the
+ * identity provider. You will probably call login() twice in your app, once
+ * to check if the user is already logged in by passing the silent parameter as
+ * true. If they are not (onComplete will be invoked with an error), you may
+ * display a login button and associate the click action for it with another
+ * call to login(), this time setting silent to false.
+ *
+ * @param    {boolean}   silent      Whether or not a silent (no popup)
+ *                                   login should be performed.
  * @param    {Function}  onComplete  The callback to call when login is done.
  */
-Firefeed.prototype.login = function(user, onComplete) {
+Firefeed.prototype.login = function(silent, onComplete) {
   var self = this;
-  self._validateString(user, "user");
-  self._validateCallback(onComplete);
-  $.ajax({
-    type: "POST",
-    url: self._authURL + "/login",
-    data: {user: user || ""},
-    dataType: "json",
-    success: function(data) {
-      self._user = data.user;
-      var ctx;
-      if (self._newContext) {
-        ctx = new Firebase.Context();
-      }
-      var ref = new Firebase(self._baseURL, ctx);
-      ref.auth(data.token, function(done) {
-        if (done) {
-          self._firebase = ref;
-          self._mainUser = ref.child("users").child(user);
-          ref.child("people").child(user).set("online");
-          onComplete(false, self._user);
-        } else {
-          onComplete(new Error("Could not auth to Firebase"), false);
-        }
-      });
-    },
-    error: function(xhr, status, error) {
-      onComplete(error, null);
-    }
+  self._validateCallback(onComplete, true);
+
+  // We store the Firebase token in localStorage, so if one isn't present
+  // we'll assume the user hasn't logged in.
+  var token = localStorage.getItem("authToken");
+  if (!token && silent) {
+    onComplete(new Error("User is not logged in"), false);
+    return;
+  } else if (token) {
+    processToken(token);
+    return;
+  }
+
+  // No token was found, and silent was set to false. We'll attempt to login
+  // the user via the Facebook helper.
+  var authClient = new FirebaseAuthClient("firefeed", {
+    endpoint: "https://staging-auth.firebase.com/auth"
   });
+  authClient.login("facebook", function(err, token, info) {
+    if (err) {
+      onComplete(new Error(err), false);
+      return;
+    }
+    // We got ourselves a token! Persist the info in localStorage for later.
+    localStorage.setItem("userid", info.id);
+    localStorage.setItem("authToken", token);
+    localStorage.setItem("displayName", info.displayName);
+    processToken(token);
+  });
+
+  function processToken(token) {
+    // Create and authenticate a new Firebase ref with the token.
+    var ref = new Firebase(
+      self._baseURL, self._newContext ? new Firebase.Context() : null
+    );
+    ref.auth(token, function(done) {
+      if (done) {
+        self._firebase = ref;
+        self._userid = localStorage.getItem("userid");
+        self._mainUser = ref.child("users").child(self._userid);
+        self._displayName = localStorage.getItem("displayName");
+
+        ref.child("people").child(self._userid).set({
+          displayName: self._displayName,
+          presence: "online"
+        });
+        onComplete(false, self._displayName);
+      } else {
+        onComplete(new Error("Could not auth to Firebase"), false);
+      }
+    });
+  }
 };
 
 /**
- * Logout the current user. No functions can be called on this object without
- * subsequent successful login. The provided callback will be called with
- * (err, done) where "err" will be false if the login succeeded.
- *
- * @param    {string}    user        The user to login as.
- * @param    {Function}  onComplete  The callback to call when logout is done.
+ * Logout the current user. The object may be reused after a logout, but only
+ * after a successful login() has been performed.
  */
-Firefeed.prototype.logout = function(onComplete) {
-  var self = this;
-  self._validateCallback(onComplete);
-  $.ajax({
-    type: "POST",
-    url: self._authURL + "/logout",
-    success: function(data) {
-      self._firebase.child("people").child(self._user).set("offline");
-      self._firebase.unauth();
-      self._firebase = null;
-      self._mainUser = null;
-      self._user = null;
-      onComplete(false, true);
-    },
-    error: function(xhr, status, error) {
-      onComplete(error, false);
-    }
-  });
+Firefeed.prototype.logout = function() {
+  // Reset all keys and other user info.
+  localStorage.clear();
+
+  // Set presence to offline, reset all instance variables, and return!
+  this._firebase.unauth();
+  this._firebase.child("people").child(this._userid).set("offline");
+
+  this._userid = null;
+  this._mainUser = null;
+  this._firebase = null;
+  this._displayName = null;
 };
 
 /**
@@ -133,7 +160,7 @@ Firefeed.prototype.follow = function(user, onComplete) {
 
     // Then, we add the current user to the folowers list of user just followed.
     var followUser = self._firebase.child("users").child(user);
-    followUser.child("followers").child(self._user).set(true);
+    followUser.child("followers").child(self._userid).set(true);
 
     // Last, we copy all previous sparks generated by the user just followed
     // to the stream of the current user so they will be displayed.
@@ -168,7 +195,12 @@ Firefeed.prototype.post = function(content, onComplete) {
   // we get a unique ID for the spark that is chronologically ordered.
   var sparkRef = self._firebase.child("sparks").push();
   var sparkRefId = sparkRef.name();
-  sparkRef.set({author: self._user, content: content}, function(done) {
+
+  var spark = {
+    author: self._userid, displayName: self._displayName, content: content
+  };
+
+  sparkRef.set(spark, function(done) {
     if (!done) {
       onComplete(new Error("Could not post spark"), false);
       return;
@@ -182,6 +214,9 @@ Firefeed.prototype.post = function(content, onComplete) {
         onComplete(new Error("Could not add spark to stream"), false);
         return;
       }
+
+      // Then, we add the spark ID to the users own stream.
+      self._mainUser.child("stream").child(sparkRefId).set(true);
 
       // Finally, we add the spark ID to the stream of everyone who follows
       // the current user. This "fan-out" approach scales well!
@@ -209,14 +244,12 @@ Firefeed.prototype.post = function(content, onComplete) {
  *
  * @param    {Function}  onComplete  The callback to call whenever a new
  *                                   suggested user appears. The function is
- *                                   invoked with a single argument containing
- *                                   the user ID of the suggested user.
+ *                                   invoked with two arguments, the user ID
+ *                                   and the display name of the user.
  */
 Firefeed.prototype.onNewSuggestedUser = function(onComplete) {
   var self = this;
-  if (!onComplete || typeof onComplete != "function") {
-    throw new Error("Invalid onComplete callback provided");
-  }
+  self._validateCallback(onComplete);
 
   // First, get the current list of users the current user is following,
   // and make sure it is updated as needed.
@@ -229,11 +262,11 @@ Firefeed.prototype.onNewSuggestedUser = function(onComplete) {
     // Now, whenever a new user is added to the site, invoke the callback
     // if we decide that they are a suggested user.
     self._firebase.child("people").on("child_added", function(peopleSnap) {
-      var user = peopleSnap.name();
-      if (user == self._user || followerList.indexOf(user) >= 0) {
+      var userid = peopleSnap.name();
+      if (userid == self._userid || followerList.indexOf(userid) >= 0) {
         return;
       }
-      onComplete(user);
+      onComplete(userid, peopleSnap.val().displayName);
     });
   });
 };
@@ -244,25 +277,27 @@ Firefeed.prototype.onNewSuggestedUser = function(onComplete) {
  * spark (see Firefeed.post), which will appear in real-time on the current
  * user's feed!
  *
+ * We'll limit the number of sparks to 100, i.e. only invoke the callback
+ * for the 100 latest sparks. The callback will also be called for any sparks
+ * that are added subsequently.
+ *
  * @param    {Function}  onComplete  The callback to call whenever a new spark
  *                                   appears on the current user's stream. The
- *                                   function will be invoked with two arguments
+ *                                   function will be invoked with two
+ *                                   arguments
  *                                   the first of which is the spark ID and
  *                                   the second an object containing the
  *                                   "author" and "content" properties.
  */
 Firefeed.prototype.onNewSpark = function(onComplete) {
   var self = this;
-  if (!onComplete || typeof onComplete != "function") {
-    throw new Error("Invalid onComplete callback provided");
-  }
+  self._validateCallback(onComplete);
 
   // We simply listen for new children on the current user's stream.
-  self._mainUser.child("stream").on("child_added", function(sparkRefSnap) {
-    var sparkID = sparkRefSnap.name();
-
+  self._mainUser.child("stream").limit(100).on("child_added", function(snap) {
     // When a new spark is added, fetch the content from the master spark list
     // since streams only contain references in the form of spark IDs.
+    var sparkID = snap.name();
     var sparkRef = self._firebase.child("sparks").child(sparkID);
     sparkRef.on("value", function(sparkSnap) {
       onComplete(sparkSnap.name(), sparkSnap.val());
