@@ -15,4 +15,4 @@ to how ever many users end up using the site!
 License
 -------
 No part of this project may be copied, modified, propagated, or distributed
-except according to terms in the accompanying LICENSE file.
+except according to terms in the accompanying LICENSE file (MIT licensed).
