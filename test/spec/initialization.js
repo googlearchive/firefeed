@@ -2,25 +2,19 @@
 describe("Initialization:", function() {
   var firefeed = null;
 
-  beforeEach(function() {
-    firefeed = new Firefeed(BASEURL, AUTHURL);
-  });
-
   it("Constructor", function() {
+    firefeed = new Firefeed(BASEURL);
     expect(typeof firefeed).toBe(typeof {});
     expect(firefeed._baseURL).toBe(BASEURL);
-    expect(firefeed._authURL).toBe(AUTHURL);
   });
 
   it("Login", function() {
     var flag = false;
 
     runs(function() {
-      firefeed.login(USER, function(err, done) {
-        expect(err).toBe(false);
-        expect(done).toBe(USER);
-        expect(firefeed._user).toBe(USER);
-        expect(firefeed._firebase).toNotBe(null);
+      makeAndLoginAs(USER, function(ff) {
+        expect(ff).toNotBe(null);
+        firefeed = ff;
         flag = true;
       });
     });
@@ -31,22 +25,13 @@ describe("Initialization:", function() {
   });
 
   it("Logout", function() {
-    var flag  = false;
-
-    runs(function() {
-      firefeed.login(USER, function() {
-        firefeed.logout(function(err, done) {
-          expect(err).toBe(false);
-          expect(done).toBe(true);
-          expect(firefeed._firebase).toBe(null);
-          expect(firefeed._user).toBe(null);
-          flag = true;
-        });
-      });
-    });
-
-    waitsFor(function() {
-      return flag;
-    }, "Logout callback should be called", TIMEOUT);
+    firefeed.logout();
+    expect(firefeed._firebase).toBe(null);
+    expect(firefeed._userid).toBe(null);
+    expect(firefeed._displayName).toBe(null);
+    expect(firefeed._mainUser).toBe(null);
+    expect(localStorage.getItem("authToken")).toBe(null);
+    expect(localStorage.getItem("userid")).toBe(null);
+    expect(localStorage.getItem("_displayName")).toBe(null);
   });
 });
