@@ -1,13 +1,27 @@
 
 var ff = new Firefeed("http://firebase.fblocal.com:9000/");
 
-function onLogin() {
-  ff.login(signedIn);
-}
-function onLogout() {
-  ff.logout(signedOut);
-}
-function signedIn(err, user) {
+$(document).ready(function() {
+  $("#login-button").click(function() {
+    ff.login(false, signedIn);
+  });
+  $("#logout-button").click(function() {
+    ff.logout();
+    signedOut();
+  });
+
+  ff.login(true, function(err, name) {
+    if (err) {
+      // User is not signed in, render button.
+      $("#login-box").css("display", "block");
+      return;
+    }
+    // Resuming session.
+    signedIn(err, name);
+  });
+});
+
+function signedIn(err, name) {
   if (err) {
     alert("There was an error while logging in!");
     return;
@@ -15,23 +29,20 @@ function signedIn(err, user) {
   showSuggested();
   updateStream();
   $("#login-box").css("display", "none");
-  $("#welcome-msg").html("Welcome back to FireFeed, <b>" + user + "</b>!");
+  $("#welcome-msg").html("Welcome back to FireFeed, <b>" + name + "</b>!");
   $("#content-box").css("display", "block");
 }
-function signedOut(err) {
-  if (err) {
-    alert("There was an error while logging out!");
-    return;
-  }
+function signedOut() {
   $("#login-box").css("display", "block");
   $("#welcome-msg").html("Welcome to FireFeed!");
   $("#content-box").css("display", "none");
 }
 function showSuggested() {
   ff.onNewSuggestedUser(function(user) {
+    $("#recommended").css("display", "block");
     $("<li id='follow" + user + "' />")
         .html(user + " - <a href='#' onclick='followUser(\"" + user + "\");'>Follow</a>")
-        .appendTo("#user-list");
+        .appendTo("#recommended-list");
   });
 }
 function updateStream() {
@@ -53,6 +64,9 @@ function followUser(user) {
     if (!err) {
       $("#follow" + user).delay(500).fadeOut("slow", function() {
         $(this).remove();
+        if ($("#recommended-list li").length == 0) {
+          $("#recommended-list").fadeOut("slow");
+        }
       });
       return;
     }

@@ -34,7 +34,7 @@
         <ul>
           <li class="active"><a href="#">Home</a></li>
           <li><a href="#">About</a></li>
-          <li><a href="javascript:onLogout();">Logout</a></li>
+          <li><a href="#" id="logout-button">Logout</a></li>
         </ul>
       </nav>
     </header>
@@ -43,9 +43,9 @@
       <article class="hero clearfix">
         <div class="col_100">
           <h1 id="welcome-msg">Welcome to FireFeed!</h1>
-          <p id="login-box">
-            <a href="javascript:onLogin();">
-              <img src="img/twitter-gray.png" alt="Sign in with Twitter"/>
+          <p id="login-box" style="display:none;">
+            <a id="login-button" href="#">
+              <img src="img/login-button.png" alt="Sign in with Facebook"/>
             </a>
           </p>
         </div>
@@ -73,10 +73,11 @@
             </tr>
           </table>
 
-          <h2>People you might know</h2>
-          <ul id="user-list">
+          <h2 id="recommended" style="display:none;">People you might know</h2>
+          <ul id="recommended-list">
           </ul>
         </div>
+      </article>
     </div>
 
     <footer class="footer clearfix">
