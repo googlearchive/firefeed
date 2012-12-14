@@ -1,42 +1,44 @@
 {
   "rules": {
-    // A list of users with their names on the site, readable by everyone.
+    // All data is readable by anyone.
+    ".read": true,
     "people": {
-      ".read": "true",
+      // A list of users with their names on the site.
       "$userid": {
         // Only the user can write their own entry into this list.
         ".write": "$userid == auth.id"
       }
     },
     "users": {
-      // The user is allowed to read and write everything in their bucket.
       "$userid": {
-        ".read": "$userid == auth.id",
+        // The user is allowed to write everything in their bucket.
         ".write": "$userid == auth.id",
         "following": {
           // Only a user that's in the "people" list can be followed.
+          "$followingid": {
+            ".write": "root.child('people').hasChild($followingid)"
+          }
+        },
+        "followers": {
+          // Anyone can subscribe to this user's sparks.
           "$followerid": {
-            ".validate": "newData.isBoolean() && root.child('people').hasChild($followerid)"
+            ".write": "$followerid == auth.id"
           }
         },
         "stream": {
-          // User A can write in user's B stream, but only if A is following B.
-          ".write": "root.child('users').child($userid).child('following').hasChild(auth.id)",
           "$sparkid": {
-            // And, User A can only write sparks for which they are the author.
-            ".validate": "root.child('sparks').child($sparkid).child('author').val() == auth.id"
+            // User A can write in user's B stream, but only if A is following B, and only for sparks for which they are the author.
+            ".write": "root.child('users').child($userid).child('following').hasChild(auth.id) && root.child('sparks').child($sparkid).child('author').val() == auth.id"
           }
         }
       }
     },
     "sparks": {
-      // A global list of sparks, readable by anyone.
-      ".read": "true",
+      // A global list of sparks (the "firehose").
       "$sparkid": {
         // Modifying an existing spark is not allowed.
         ".write": "data.val() == null",
-        // A spark must have all three properties.
-        ".validate": "newData.hasChildren(['author', 'displayName', 'content'])",
+        ".validate": "newData.hasChild('author')",
         // A user can attribute a spark only to themselves.
         "author": {
           ".validate": "newData.val() == auth.id"

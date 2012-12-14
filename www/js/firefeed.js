@@ -131,8 +131,8 @@ Firefeed.prototype.logout = function() {
   localStorage.clear();
 
   // Set presence to offline, reset all instance variables, and return!
-  this._firebase.unauth();
   this._firebase.child("people").child(this._userid).set("offline");
+  this._firebase.unauth();
 
   this._userid = null;
   this._mainUser = null;
