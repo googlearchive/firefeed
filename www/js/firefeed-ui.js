@@ -1,5 +1,5 @@
 
-var ff = new Firefeed("http://firebase.fblocal.com:9000/");
+var ff = new Firefeed("http://firefeed.firebaseio-staging.com/");
 
 $(document).ready(function() {
   $("#login-button").click(function() {
@@ -23,7 +23,7 @@ $(document).ready(function() {
 
 function signedIn(err, name) {
   if (err) {
-    alert("There was an error while logging in!");
+    alert("There was an error while logging in! " + err);
     return;
   }
   showSuggested();
@@ -38,10 +38,10 @@ function signedOut() {
   $("#content-box").css("display", "none");
 }
 function showSuggested() {
-  ff.onNewSuggestedUser(function(user) {
+  ff.onNewSuggestedUser(function(userid, name) {
     $("#recommended").css("display", "block");
-    $("<li id='follow" + user + "' />")
-        .html(user + " - <a href='#' onclick='followUser(\"" + user + "\");'>Follow</a>")
+    $("<li id='follow" + userid + "' />")
+        .html(name + " - <a href='#' onclick='followUser(\"" + userid + "\");'>Follow</a>")
         .appendTo("#recommended-list");
   });
 }
@@ -51,7 +51,7 @@ function updateStream() {
       $("#default-spark").remove();
     }
     var elId = "#spark-" + id;
-    var innerHTML = "<td>" + spark.author + "</td>" + "<td>" + spark.content + "</td>";
+    var innerHTML = "<td>" + spark.displayName + "</td>" + "<td>" + spark.content + "</td>";
     if ($(elId).length) {
       $(elId).html(innerHTML);
     } else {

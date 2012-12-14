@@ -15,6 +15,7 @@ function Firefeed(baseURL, newContext) {
   this._userid = null;
   this._firebase = null;
   this._mainUser = null;
+  this._displayName = null;
   this._newContext = newContext || false;
 
   if (!baseURL || typeof baseURL != "string") {
@@ -80,8 +81,8 @@ Firefeed.prototype.login = function(silent, onComplete) {
 
   // No token was found, and silent was set to false. We'll attempt to login
   // the user via the Facebook helper.
-  var authClient = new FirebaseAuthClient("firebase", {
-    endpoint: "http://127.0.0.1:12000/auth"
+  var authClient = new FirebaseAuthClient("firefeed", {
+    endpoint: "https://staging-auth.firebase.com/auth"
   });
   authClient.login("facebook", function(err, token, info) {
     if (err) {
@@ -105,13 +106,13 @@ Firefeed.prototype.login = function(silent, onComplete) {
         self._firebase = ref;
         self._userid = localStorage.getItem("userid");
         self._mainUser = ref.child("users").child(self._userid);
+        self._displayName = localStorage.getItem("displayName");
 
-        var name = localStorage.getItem("displayName");
         ref.child("people").child(self._userid).set({
-          displayName: name,
+          displayName: self._displayName,
           presence: "online"
         });
-        onComplete(false, name);
+        onComplete(false, self._displayName);
       } else {
         onComplete(new Error("Could not auth to Firebase"), false);
       }
@@ -134,6 +135,7 @@ Firefeed.prototype.logout = function() {
   this._userid = null;
   this._mainUser = null;
   this._firebase = null;
+  this._displayName = null;
 };
 
 /**
@@ -193,7 +195,12 @@ Firefeed.prototype.post = function(content, onComplete) {
   // we get a unique ID for the spark that is chronologically ordered.
   var sparkRef = self._firebase.child("sparks").push();
   var sparkRefId = sparkRef.name();
-  sparkRef.set({author: self._userid, content: content}, function(done) {
+
+  var spark = {
+    author: self._userid, displayName: self._displayName, content: content
+  };
+
+  sparkRef.set(spark, function(done) {
     if (!done) {
       onComplete(new Error("Could not post spark"), false);
       return;
@@ -207,6 +214,9 @@ Firefeed.prototype.post = function(content, onComplete) {
         onComplete(new Error("Could not add spark to stream"), false);
         return;
       }
+
+      // Then, we add the spark ID to the users own stream.
+      self._mainUser.child("stream").child(sparkRefId).set(true);
 
       // Finally, we add the spark ID to the stream of everyone who follows
       // the current user. This "fan-out" approach scales well!
@@ -234,8 +244,8 @@ Firefeed.prototype.post = function(content, onComplete) {
  *
  * @param    {Function}  onComplete  The callback to call whenever a new
  *                                   suggested user appears. The function is
- *                                   invoked with a single argument containing
- *                                   the user ID of the suggested user.
+ *                                   invoked with two arguments, the user ID
+ *                                   and the display name of the user.
  */
 Firefeed.prototype.onNewSuggestedUser = function(onComplete) {
   var self = this;
@@ -256,7 +266,7 @@ Firefeed.prototype.onNewSuggestedUser = function(onComplete) {
       if (userid == self._userid || followerList.indexOf(userid) >= 0) {
         return;
       }
-      onComplete(userid.val().displayName);
+      onComplete(userid, peopleSnap.val().displayName);
     });
   });
 };
