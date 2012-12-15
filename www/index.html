@@ -1,96 +1,170 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <link href="favicon.ico" rel="shortcut icon">
-  <link rel="stylesheet" href="css/style.css">
-  <title>FireFeed</title>
+<!DOCTYPE html>
+  <!--[if lte IE 7]> <html class="no-js oldie ie7" lang="en"> <![endif]-->
+  <!--[if IE 8]> <html class="no-js oldie ie8" lang="en"> <![endif]-->
+  <!--[if gt IE 8]><!--> <html class="no-js" lang="en"> <!--<![endif]-->
+  <head>
+    <meta charset="utf-8" />
+    <meta content="IE=edge,chrome=1" http-equiv="X-UA-Compatible" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0 maximum-scale=1, user-scalable=no" />
+    <title>Firefeed</title>
+    <meta name="description" content="">
+    <link href="img/favicon.png" rel="shortcut icon" />
+    <link href="img/apple-touch-icon.png" rel="apple-touch-icon" />
+    <link href="css/global.css" rel="stylesheet" />
+    <script src="//cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+  </head>
+  
+  <body>
+    <div id="fb-root"></div>
+    <script>
+      window.fbAsyncInit = function() {
+        FB.init({
+          appId      : '104907529680402',
+          channelUrl : 'channel.html'
+        });
+      };
+      (function(d, debug){
+         var js, id = 'facebook-jssdk', ref = d.getElementsByTagName('script')[0];
+         if (d.getElementById(id)) {return;}
+         js = d.createElement('script'); js.id = id; js.async = true;
+         js.src = "//connect.facebook.net/en_US/all" + (debug ? "/debug" : "") + ".js";
+         ref.parentNode.insertBefore(js, ref);
+       }(document, /*debug*/ false));
+    </script>
 
-  <!--[if lt IE 9]><script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
-  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
-  <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.9.2/jquery-ui.min.js"></script>
+    <div id="wrapper">
 
-  <!-- Firebase.js and auth client must be included before Firefeed -->
-  <script src="//cdn-staging.firebase.com/v0/firebase.js"></script>
-  <script src="//cdn-staging.firebase.com/v0/firebase-auth-client.js"></script>
+      <header id="header">
+      </header>
 
-  <script src="js/firefeed.js"></script>
-  <script src="js/firefeed-ui.js"></script>
-</head>
-
-<body>
-  <a href="//github.com/firebase/firefeed">
-    <img style="position: absolute; top: 0; left: 0; border: 0;"
-    src="//s3.amazonaws.com/github/ribbons/forkme_left_orange_ff7600.png"
-    alt="Fork me on GitHub">
-  </a>
-  <div class="container">
-
-    <header class="header clearfix">
-      <div class="logo"></div>
-
-      <nav class="menu_main">
-        <ul>
-          <li class="active"><a href="#">Home</a></li>
-          <li><a href="#">About</a></li>
-          <li><a href="#" id="logout-button">Logout</a></li>
-        </ul>
-      </nav>
-    </header>
-
-    <div class="info">
-      <article class="hero clearfix">
-        <div class="col_100">
-          <h1 id="welcome-msg">Welcome to FireFeed!</h1>
-          <p>&nbsp;</p>
-          <p id="login-box" style="display:none;">
-            <a id="login-button" href="#">
-              <img src="img/login-button.png" alt="Sign in with Facebook"/>
-            </a>
-          </p>
+      <script id="tmpl-index-header" type="text/html">
+        <a href="//github.com/firebase/firefeed" class="ribbon-github">
+          <img src="img/ribbon-github.png" alt="Fork me on GitHub" />
+        </a>
+        <a href="" class="ribbon-example">
+          <img src="img/ribbon-example.png" alt="Official Firebase example" />
+        </a>
+      </script>
+      <script id="tmpl-page-header" type="text/html">
+        <div class="wrapper cf">
+          <h1 class="logo"><a href="index.html"><img src="img/wordmark.png" alt="Firefeed" /></a></h1>
+          <nav>
+            <a href="">Logout</a></li>
+          </nav>
         </div>
-      </article>
+      </script>
 
-      <article class="article clearfix" id="content-box" style="display: none;">
-        <div class="col_33">
-          <h2>New Spark</h2><br/>
-          <textarea cols="40" rows="8" name="textarea" id="new-spark"></textarea>
-          <div id="submit-box">
-            <br/>
-            <button onclick="onSparkPost();" id="post-button" type="button" class="button">Post</button>
+      <div id="body">
+      </div>
+
+      <script id="tmpl-content" type="text/html">
+        <div id="content" class="{{classes}}">
+          <div class="wrapper">
+            <div class="row">
+              {{{content}}}
+            </div>
           </div>
         </div>
-        <div class="col_66">
-          <h2>Your Stream</h2>
-          <table id="spark-stream" class="table">
-            <tr>
-              <th></th>
-              <th></th>
-            </tr>
-            <tr id="default-spark">
-              <td>FireFeed</td>
-              <td>Your stream is empty - follow some people!</td>
-            </tr>
-          </table>
+      </script>
 
-          <h2 id="recommended" style="display:none;">People you might know</h2>
-          <ul id="recommended-list">
+      <script id="tmpl-index-content" type="text/html">
+        <div class="threefifth center aligncenter">
+          <img src="img/logo.png" />
+          <h1 class="main-heading"><img src="img/wordmark-large.png" alt="Firefeed" /></h1>
+          <h2 class="subheading">
+            A Twitter clone built with 
+            <a href="">Firebase</a>.
+          </h2>
+          <p class="big-copy pushv8">Feel free to use and modify this in your own products and projects.</p>
+          
+          <div class="pushv4">
+            <a id="login-button" href="#" class="btn clean">
+              <span class="icon facebook"></span>
+              <span>Sign in with Facebook</span>
+            </a>
+          </div>
+          
+          <div class="pushv4">
+            <a href="" class="btn default pushv4">Read more about Firefeed</a>
+          </div>
+        </div>
+      </script>
+
+      <script id="tmpl-timeline-content" type="text/html">
+        <div class="third">
+          <div class="media">
+            <div class="img avatar"><img src="img/avatar.jpg" alt="{{name}}" /></div>
+            <div class="body">
+              <h2 class="end">{{name}}</h2>
+              <p class="big-copy end">{{location}}</p>
+              <p class="big-copy">{{bio}}</p>
+            </div>
+          </div>
+          <div class="field">
+            <textarea class="text" rows="4" cols="10" placeholder="Share an update"></textarea>
+          </div>
+          <small class="field-help">132 characters remaining</small>
+          <a href="" class="btn default full pushv4">Update Status</a>
+          
+          <div class="separator pushv4"></div>
+          
+          <div id="suggested-users">
+            <h3>Follow these users!</h3>
+          </div>
+        </div>
+        <div class="twothird">
+          <ul class="item-list">
+            {{#sparks}}
+              <li>
+                <div class="media">
+                  <div class="img avatar clean"><img src="img/avatar.jpg" alt="{{name}}" /></div>
+                  <div class="body">
+                    <p class="title end">{{name}}</p>
+                    <p class="main-copy pushv">{{spark-content}}</p>
+                    <p class="meta end">{{timestamp}}</p>
+                  </div>
+                </div>
+              </li>
+            {{/sparks}}
           </ul>
         </div>
-      </article>
-    </div>
+      </script>
 
-    <footer class="footer clearfix">
-      <div class="copyright">(C) 2012 Firebase.</div>
-      <nav class="menu_bottom">
-        <ul>
-          <li class="active"><a href="#">A Firebase Project</a></li>
-          <li><a href="#">FAQ</a></li>
-        </ul>
-      </nav>
+      <script id="tmpl-suggested-user" type="text/html">
+        <div class="media pushv4">
+          <div class="img avatar"><img src="img/avatar.jpg" alt="{{name}}" /></div>
+          <div class="body">
+            <p class="big-copy end">{{name}}</p>
+            <p class="copy pushv">{{bio}}</p>
+            <a href="javascript:followUser({{id}});" class="btn default small">Follow</a>
+          </div>
+        </div>
+      </script>
+    </div><!-- #wrapper END -->
+  
+    <footer id="footer">
+      <ul>
+        <li><a href="about.html">About</a></li>
+        <li>Follow <a href="//twitter.com/firebase" target="_blank">@Firebase</a></li>
+      </ul>
     </footer>
+  
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jqueryui/1.9.2/jquery-ui.min.js"></script>
+    <!--[if (gte IE 6)&(lte IE 8)]>
+      <script src="//cdnjs.cloudflare.com/ajax/libs/selectivizr/1.0.2/selectivizr-min.js"></script>
+    <![endif]-->
 
-  </div>
-</body>
+    <!-- Firebase.js and auth client must be included before Firefeed -->
+    <script src="//cdn-staging.firebase.com/v0/firebase.js"></script>
+    <script src="//cdn-staging.firebase.com/v0/firebase-auth-client.js"></script>
+
+    <!-- Templates by Mustache -->
+    <script src="//cdnjs.cloudflare.com/ajax/libs/mustache.js/0.7.0/mustache.min.js"></script>
+
+    <!-- Finally, the Firefeed code -->
+    <script src="js/firefeed.js"></script>
+    <script src="js/firefeed-ui.js"></script>
+
+  </body>
 </html>

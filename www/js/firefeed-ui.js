@@ -1,104 +1,42 @@
 
-var ff = new Firefeed("http://firefeed.firebaseio-staging.com/");
-
+var firefeed;
 $(document).ready(function() {
-  $("#login-button").click(function() {
-    ff.login(false, signedIn);
-  });
-  $("#logout-button").click(function() {
-    ff.logout();
-    signedOut();
-  });
-
-  ff.login(true, function(err, name) {
-    if (err) {
-      // User is not signed in, render button.
-      $("#login-box").css("display", "block");
-      return;
-    }
-    // Resuming session.
-    signedIn(err, name);
-  });
+  firefeed = new Firefeed("http://firefeed.firebaseio-staging.com/");
+  renderHome();
 });
 
-function signedIn(err, name) {
-  if (err) {
-    alert("There was an error while logging in! " + err);
-    return;
-  }
-  showSuggested();
-  updateStream();
-  $("#login-box").css("display", "none");
-  $("#welcome-msg").html("Welcome back to FireFeed, <b>" + name + "</b>!");
-  $("#content-box").css("display", "block");
-}
-function signedOut() {
-  $("#login-box").css("display", "block");
-  $("#welcome-msg").html("Welcome to FireFeed!");
-  $("#content-box").css("display", "none");
-}
-function showSuggested() {
-  ff.onNewSuggestedUser(function(userid, name) {
-    $("#recommended").css("display", "block");
-    $("<li id='follow" + userid + "' />")
-        .html(name + " - <a href='#' onclick='followUser(\"" + userid + "\");'>Follow</a>")
-        .appendTo("#recommended-list");
+function renderHome() {
+  $("#header").html($("#tmpl-index-header").html());
+  var body = Mustache.to_html($("#tmpl-content").html(), {
+    classes: "cf home", content: $("#tmpl-index-content").html()
   });
-}
-function updateStream() {
-  ff.onNewSpark(function(id, spark) {
-    if ($("#default-spark").length) {
-      $("#default-spark").remove();
-    }
+  $("#body").html(body); 
 
-    var row = $(elId);
-    var elId = "#spark-" + id;
-    if (!row.length) {
-      row = $("<tr/>", {id: elId});
-      $("#spark-stream tr:first").after(row);
-    }
-    row.append($("<td/>").text(spark.displayName));
-    row.append($("<td/>").text(spark.content));
-  });
-}
-function followUser(user) {
-  ff.follow(user, function(err, done) {
-    if (!err) {
-      $("#follow" + user).delay(500).fadeOut("slow", function() {
-        $(this).remove();
-        if ($("#recommended-list li").length == 0) {
-          $("#recommended").fadeOut("slow");
-        }
-      });
-      return;
-    }
-    alert("Could not follow user! " + err);
-  });
-}
-function onSparkPost() {
-  $("post-button").attr("disabled", "disabled");
-  ff.post($("#new-spark").val(), function(err, done) {
-    showPostedToast(!err);
-  });
-}
-function showPostedToast(success) {
-  $("post-button").removeAttr("disabled");
-
-  var toast;
-  if (success) {
-    $("#new-spark").val("");
-    toast = $("<span class='success'/>");
-    toast.html("Successfully posted!")
-  } else {
-    toast = $("<span class='warning'/>");
-    toast.html("Error while posting!");
-  }
-  toast.css("display", "none");
-
-  toast.appendTo($("#submit-box"));
-  toast.delay(100).fadeIn("slow", function() {
-    $(this).delay(1000).fadeOut("slow", function() {
-      $(this).remove();
+  $("#login-button").click(function(e) {
+    firefeed.login(false, function(err, name) {
+      if (err) {
+        alert("oops!");
+      } else {
+        renderTimeline(name);
+      }
     });
+    e.preventDefault();
+  });
+}
+
+function renderTimeline(name) {
+  $("#header").html($("#tmpl-page-header").html());
+  var content = Mustache.to_html($("#tmpl-timeline-content").html(), {
+    name: name, location: "San Francisco, CA"
+  });
+  var body = Mustache.to_html($("#tmpl-content").html(), {
+    classes: "cf", content: content
+  });
+  $("#body").html(body);
+
+  firefeed.onNewSuggestedUser(function(userid, name) {
+      $(Mustache.to_html($("#tmpl-suggested-user").html(), {
+        id: userid, name: name
+      })).appendTo("#suggested-users");
   });
 }
