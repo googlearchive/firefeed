@@ -174,13 +174,13 @@ img{
 #header nav a:hover{color: #333;}
 
 .ribbon-github,
-.ribbon-example{
+.ribbon-curl{
   position: absolute;
   top: -1px;
 }
 
 .ribbon-github{left: 0;}
-.ribbon-example{right: 0;}
+.ribbon-curl{right: 0;}
 
 /* Content
 ============================================================ */
