@@ -15,7 +15,8 @@ function Firefeed(baseURL, newContext) {
   this._userid = null;
   this._firebase = null;
   this._mainUser = null;
-  this._displayName = null;
+  this._fullName = null;
+  this._firstName = null;
   this._newContext = newContext || false;
 
   if (!baseURL || typeof baseURL != "string") {
@@ -104,7 +105,8 @@ Firefeed.prototype.login = function(silent, onComplete) {
     // We got ourselves a token! Persist the info in localStorage for later.
     localStorage.setItem("userid", info.id);
     localStorage.setItem("authToken", token);
-    localStorage.setItem("displayName", info.displayName);
+    localStorage.setItem("firstName", info.first_name);
+    localStorage.setItem("fullName", info.name);
     finish();
   });
 
@@ -112,13 +114,15 @@ Firefeed.prototype.login = function(silent, onComplete) {
     self._firebase = ref;
     self._userid = localStorage.getItem("userid");
     self._mainUser = ref.child("users").child(self._userid);
-    self._displayName = localStorage.getItem("displayName");
+    self._fullName = localStorage.getItem("fullName");
+    self._firstName = localStorage.getItem("firstName");
 
     ref.child("people").child(self._userid).set({
-      displayName: self._displayName,
+      firstName: self._firstName,
+      fullName: self._fullName,
       presence: "online"
     });
-    onComplete(false, self._displayName);
+    onComplete(false, self._firstName);
   }
 };
 
@@ -131,13 +135,14 @@ Firefeed.prototype.logout = function() {
   localStorage.clear();
 
   // Set presence to offline, reset all instance variables, and return!
-  this._firebase.child("people").child(this._userid).set("offline");
+  //this._firebase.child("people").child(this._userid).set("offline");
   this._firebase.unauth();
 
   this._userid = null;
   this._mainUser = null;
   this._firebase = null;
-  this._displayName = null;
+  this._fullName = null;
+  this._firstName = null;
 };
 
 /**
@@ -199,7 +204,7 @@ Firefeed.prototype.post = function(content, onComplete) {
   var sparkRefId = sparkRef.name();
 
   var spark = {
-    author: self._userid, displayName: self._displayName, content: content
+    author: self._userid, by: self._fullName, content: content
   };
 
   sparkRef.set(spark, function(done) {
@@ -266,7 +271,7 @@ Firefeed.prototype.onNewSuggestedUser = function(onComplete) {
       if (userid == self._userid || followerList.indexOf(userid) >= 0) {
         return;
       }
-      onComplete(userid, peopleSnap.val().displayName);
+      onComplete(userid, peopleSnap.val().fullName);
     });
   });
 };

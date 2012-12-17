@@ -19,7 +19,8 @@ var makeAndLoginAs = function(user, cb) {
   localStorage.clear();
   localStorage.setItem("authToken", token);
   localStorage.setItem("userid", user);
-  localStorage.setItem("displayName", user);
+  localStorage.setItem("firstName", user);
+  localStorage.setItem("fullName", user);
 
   ff.login(true, function(err, done) {
     expect(err).toBe(false);

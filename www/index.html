@@ -49,7 +49,7 @@
         <div class="wrapper cf">
           <h1 class="logo"><a href="index.html"><img src="img/wordmark.png" alt="Firefeed" /></a></h1>
           <nav>
-            <a href="">Logout</a></li>
+            <a id="logout-button" href="">Logout</a>
           </nav>
         </div>
       </script>
@@ -113,21 +113,22 @@
           </div>
         </div>
         <div class="twothird">
-          <ul class="item-list">
-            {{#sparks}}
-              <li>
-                <div class="media">
-                  <div class="img avatar clean"><img src="img/avatar.jpg" alt="{{name}}" /></div>
-                  <div class="body">
-                    <p class="title end">{{name}}</p>
-                    <p class="main-copy pushv">{{spark-content}}</p>
-                    <p class="meta end">{{timestamp}}</p>
-                  </div>
-                </div>
-              </li>
-            {{/sparks}}
+          <ul id="spark-list" class="item-list">
           </ul>
         </div>
+      </script>
+
+      <script id="tmpl-spark" type="text/html">
+        <li>
+          <div class="media">
+            <div class="img avatar clean"><img src="img/avatar.jpg" alt="{{name}}" /></div>
+            <div class="body">
+              <p class="title end">{{name}}</p>
+              <p class="main-copy pushv">{{spark-content}}</p>
+              <p class="meta end">{{timestamp}}</p>
+            </div>
+          </div>
+        </li>
       </script>
 
       <script id="tmpl-suggested-user" type="text/html">
@@ -159,8 +160,9 @@
     <script src="//cdn-staging.firebase.com/v0/firebase.js"></script>
     <script src="//cdn-staging.firebase.com/v0/firebase-auth-client.js"></script>
 
-    <!-- Templates by Mustache -->
+    <!-- Templates by Mustache, History.js for pushState -->
     <script src="//cdnjs.cloudflare.com/ajax/libs/mustache.js/0.7.0/mustache.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/history.js/1.7.1/native.history.js"></script>
 
     <!-- Finally, the Firefeed code -->
     <script src="js/firefeed.js"></script>

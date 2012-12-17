@@ -28,7 +28,8 @@ describe("Initialization:", function() {
     firefeed.logout();
     expect(firefeed._firebase).toBe(null);
     expect(firefeed._userid).toBe(null);
-    expect(firefeed._displayName).toBe(null);
+    expect(firefeed._fullName).toBe(null);
+    expect(firefeed._firstName).toBe(null);
     expect(firefeed._mainUser).toBe(null);
     expect(localStorage.getItem("authToken")).toBe(null);
     expect(localStorage.getItem("userid")).toBe(null);
