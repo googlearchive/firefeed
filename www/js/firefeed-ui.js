@@ -10,7 +10,7 @@ $(function() {
         __ff_ui.renderHome(true);
         break;
       case "?timeline":
-        __ff_ui.renderTimeline(state.data["name"]);
+        __ff_ui.renderTimeline(state.data["info"]);
         break;
       default:
         __ff_ui.renderHome(true);
@@ -52,12 +52,12 @@ FirefeedUI.prototype._renderHome = function() {
 
   var self = this;
   $("#login-button").click(function(e) {
-    self._firefeed.login(false, function(err, name) {
+    self._firefeed.login(false, function(err, info) {
       if (err) {
         console.log("Error logging in: " + err);
       } else {
-        self.renderTimeline(name);
-        History.pushState({name: name}, "", "?timeline");
+        self.renderTimeline(info);
+        History.pushState({info: info}, "", "?timeline");
       }
     });
     e.preventDefault();
@@ -73,11 +73,11 @@ FirefeedUI.prototype.renderHome = function(logout) {
   }
 
   // Try silent login in case the user is already logged in.
-  self._firefeed.login(true, function(err, name) {
-    if (!err && name) {
+  self._firefeed.login(true, function(err, info) {
+    if (!err && info) {
       // Redirect to timeline.
-      self.renderTimeline(name);
-      History.pushState({name: name}, "", "?timeline");
+      self.renderTimeline(info);
+      History.pushState({info: info}, "", "?timeline");
     } else {
       // They aren't logged in, show home page.
       self._renderHome();
@@ -85,14 +85,12 @@ FirefeedUI.prototype.renderHome = function(logout) {
   });
 };
 
-FirefeedUI.prototype.renderTimeline = function(name) {
+FirefeedUI.prototype.renderTimeline = function(info) {
   $("#header").html($("#tmpl-page-header").html());
   $("#logout-button").click(this.logout.bind(this));
 
   // Render body.
-  var content = Mustache.to_html($("#tmpl-timeline-content").html(), {
-    name: name, location: "San Francisco, CA"
-  });
+  var content = Mustache.to_html($("#tmpl-timeline-content").html(), info);
   var body = Mustache.to_html($("#tmpl-content").html(), {
     classes: "cf", content: content
   });
@@ -116,9 +114,9 @@ FirefeedUI.prototype.renderTimeline = function(name) {
   $("#spark-input").blur(_textAreaHandler);
 
   // Attach suggested user event.
-  self._firefeed.onNewSuggestedUser(function(userid, name) {
-    $(Mustache.to_html($("#tmpl-suggested-user").html(), {
-      id: userid, name: name
-    })).appendTo("#suggested-users");
+  self._firefeed.onNewSuggestedUser(function(userid, info) {
+    info.id = userid;
+    $(Mustache.to_html($("#tmpl-suggested-user").html(), info)).
+      appendTo("#suggested-users");
   });
 };

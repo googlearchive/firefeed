@@ -29,10 +29,11 @@ describe("Initialization:", function() {
     expect(firefeed._firebase).toBe(null);
     expect(firefeed._userid).toBe(null);
     expect(firefeed._fullName).toBe(null);
-    expect(firefeed._firstName).toBe(null);
+    expect(firefeed._name).toBe(null);
     expect(firefeed._mainUser).toBe(null);
     expect(localStorage.getItem("authToken")).toBe(null);
     expect(localStorage.getItem("userid")).toBe(null);
-    expect(localStorage.getItem("_displayName")).toBe(null);
+    expect(localStorage.getItem("name")).toBe(null);
+    expect(localStorage.getItem("fullName")).toBe(null);
   });
 });

@@ -12,11 +12,11 @@
  * @return   {Firefeed}
  */
 function Firefeed(baseURL, newContext) {
+  this._name = null;
   this._userid = null;
   this._firebase = null;
   this._mainUser = null;
   this._fullName = null;
-  this._firstName = null;
   this._newContext = newContext || false;
 
   if (!baseURL || typeof baseURL != "string") {
@@ -47,9 +47,13 @@ Firefeed.prototype = {
 };
 
 /**
- * Login a given user. The provided callback will be called with (err, name)
- * where "err" will be false if the login succeeded, and "name" is set to
- * a string suitable for greeting the user.
+ * Login a given user. The provided callback will be called with (err, info)
+ * where "err" will be false if the login succeeded, and "info" is set to
+ * an object containing the following fields:
+ *    name: A string suitable for greeting the user (usually first name)
+ *    pic: URL to a square avatar of the user
+ *    location: Location of the user (can be empty)
+ *    bio: A brief bio of the user (can be empty)
  * 
  * It is an error to call any other method on this object without a login()
  * having succeeded.
@@ -105,7 +109,7 @@ Firefeed.prototype.login = function(silent, onComplete) {
     // We got ourselves a token! Persist the info in localStorage for later.
     localStorage.setItem("userid", info.id);
     localStorage.setItem("authToken", token);
-    localStorage.setItem("firstName", info.first_name);
+    localStorage.setItem("name", info.first_name);
     localStorage.setItem("fullName", info.name);
     finish();
   });
@@ -115,14 +119,27 @@ Firefeed.prototype.login = function(silent, onComplete) {
     self._userid = localStorage.getItem("userid");
     self._mainUser = ref.child("users").child(self._userid);
     self._fullName = localStorage.getItem("fullName");
-    self._firstName = localStorage.getItem("firstName");
+    self._name = localStorage.getItem("name");
 
-    ref.child("people").child(self._userid).set({
-      firstName: self._firstName,
-      fullName: self._fullName,
-      presence: "online"
+    var peopleRef = ref.child("people").child(self._userid);
+    peopleRef.once("value", function(peopleSnap) {
+      var info = {};
+      var val = peopleSnap.val();
+      if (!val) {
+        // First time login, upload details.
+        var picURL = "https://graph.facebook.com/" + self._userid + "/picture" +
+                     "/?type=square&return_ssl_resources=1";
+        info = {
+          name: self._name, fullName: self._fullName,
+          location: "", bio: "", pic: picURL
+        };
+        peopleRef.set(info);
+      } else {
+        info = val;
+      }
+      peopleRef.child("presence").set("online");
+      onComplete(false, info);
     });
-    onComplete(false, self._firstName);
   }
 };
 
@@ -135,14 +152,15 @@ Firefeed.prototype.logout = function() {
   localStorage.clear();
 
   // Set presence to offline, reset all instance variables, and return!
-  //this._firebase.child("people").child(this._userid).set("offline");
+  var peopleRef = this._firebase.child("people").child(this._userid);
+  peopleRef.child("presence").set("offline");
   this._firebase.unauth();
 
   this._userid = null;
   this._mainUser = null;
   this._firebase = null;
   this._fullName = null;
-  this._firstName = null;
+  this._name = null;
 };
 
 /**
@@ -249,10 +267,12 @@ Firefeed.prototype.post = function(content, onComplete) {
  * the current user or someone the current user doesn't follow. As the site
  * grows, this can be evolved in a number of different ways.
  *
+ * The callback is invoked with a two arguments, first the userid, and second
+ * an object, containing the same fields as the info object returned by login
+ * i.e. (name, pic, location, bio).
+ *
  * @param    {Function}  onComplete  The callback to call whenever a new
- *                                   suggested user appears. The function is
- *                                   invoked with two arguments, the user ID
- *                                   and the display name of the user.
+ *                                   suggested user appears.
  */
 Firefeed.prototype.onNewSuggestedUser = function(onComplete) {
   var self = this;
@@ -271,7 +291,7 @@ Firefeed.prototype.onNewSuggestedUser = function(onComplete) {
       if (userid == self._userid || followerList.indexOf(userid) >= 0) {
         return;
       }
-      onComplete(userid, peopleSnap.val().fullName);
+      onComplete(userid, peopleSnap.val());
     });
   });
 };
@@ -289,9 +309,9 @@ Firefeed.prototype.onNewSuggestedUser = function(onComplete) {
  * @param    {Function}  onComplete  The callback to call whenever a new spark
  *                                   appears on the current user's stream. The
  *                                   function will be invoked with two
- *                                   arguments, the first of which is the spar
+ *                                   arguments, the first of which is the spark
  *                                   ID and the second an object containing the
- *                                   "author" and "content" properties.
+ *                                   "author", "by" and "content" properties.
  */
 Firefeed.prototype.onNewSpark = function(onComplete) {
   var self = this;

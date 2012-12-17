@@ -73,6 +73,10 @@ describe("Operations:", function() {
         });
       });
     });
+
+    waitsFor(function() {
+      return flag4;
+    }, "Waiting for spark copy callback", TIMEOUT);
   });
 
   it("User in following list", function() {
