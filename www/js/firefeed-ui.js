@@ -19,6 +19,7 @@ $(function() {
 });
 
 function FirefeedUI() {
+  this._limit = 120;
   this._firefeed = new Firefeed("http://firefeed.firebaseio-staging.com/");
   this.renderHome();
 }
@@ -58,13 +59,14 @@ FirefeedUI.prototype._renderHome = function() {
 }
 
 FirefeedUI.prototype.renderHome = function(logout) {
+  var self = this;
   if (logout) {
     // Don't check if user is logged in.
     self._renderHome();
+    return;
   }
 
   // Try silent login in case the user is already logged in.
-  var self = this;
   self._firefeed.login(true, function(err, name) {
     if (!err && name) {
       // Redirect to timeline.
@@ -81,6 +83,7 @@ FirefeedUI.prototype.renderTimeline = function(name) {
   $("#header").html($("#tmpl-page-header").html());
   $("#logout-button").click(this.logout.bind(this));
 
+  // Render body.
   var content = Mustache.to_html($("#tmpl-timeline-content").html(), {
     name: name, location: "San Francisco, CA"
   });
@@ -89,7 +92,25 @@ FirefeedUI.prototype.renderTimeline = function(name) {
   });
   $("#body").html(body);
 
-  this._firefeed.onNewSuggestedUser(function(userid, name) {
+  // Attach textarea handlers.
+  var self = this;
+  function _textAreaHandler() {
+    var textarea = $("#spark-input");
+    var text = textarea.val();
+
+    $("#c-count").text("" + (self._limit - text.length));
+    if (text.length > self._limit) {
+      $("#c-count").css("color", "red");
+    } else {
+      $("#c-count").css("color", "#999");
+    }
+  };
+  $("#c-count").text(self._limit);
+  $("#spark-input").keyup(_textAreaHandler);
+  $("#spark-input").blur(_textAreaHandler);
+
+  // Attach suggested user event.
+  self._firefeed.onNewSuggestedUser(function(userid, name) {
     $(Mustache.to_html($("#tmpl-suggested-user").html(), {
       id: userid, name: name
     })).appendTo("#suggested-users");
