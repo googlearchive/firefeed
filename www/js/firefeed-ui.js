@@ -33,8 +33,14 @@ FirefeedUI.prototype.logout = function(e) {
 FirefeedUI.prototype._renderHome = function() {
   $("#header").html($("#tmpl-index-header").html());
 
+  // Preload animation.
+  var path = "img/curl-animate.gif";
+  var img = new Image();
+  img.src = path;
+
+  // Steup curl on hover.
   $(".ribbon-curl").find("img").hover(function() {
-    $(this).attr("src", "img/curl-animate.gif");
+    $(this).attr("src", path);
   }, function() {
     $(this).attr("src", "img/curl-static.gif");
   });
