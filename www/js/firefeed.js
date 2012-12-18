@@ -43,6 +43,10 @@ Firefeed.prototype = {
   _getParameterByName: function _getParameterByName(name) {
     var match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
     return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
+  },
+  _getPicURL: function _getPicURL(id) {
+    return "https://graph.facebook.com/" + (id || self._userid) +
+           "/picture/?type=square&return_ssl_resources=1";
   }
 };
 
@@ -128,11 +132,9 @@ Firefeed.prototype.login = function(silent, onComplete) {
       var val = peopleSnap.val();
       if (!val) {
         // First time login, upload details.
-        var picURL = "https://graph.facebook.com/" + self._userid + "/picture" +
-                     "/?type=square&return_ssl_resources=1";
         info = {
           name: self._name, fullName: self._fullName,
-          location: " ", bio: " ", pic: picURL
+          location: " ", bio: " ", pic: self._getPicURL()
         };
         peopleRef.set(info);
       } else {
@@ -312,7 +314,8 @@ Firefeed.prototype.onNewSuggestedUser = function(onComplete) {
  *                                   function will be invoked with two
  *                                   arguments, the first of which is the spark
  *                                   ID and the second an object containing the
- *                                   "author", "by" and "content" properties.
+ *                                   "author", "by", "pic" and "content"
+ *                                   properties.
  */
 Firefeed.prototype.onNewSpark = function(onComplete) {
   var self = this;
@@ -325,7 +328,9 @@ Firefeed.prototype.onNewSpark = function(onComplete) {
     var sparkID = snap.name();
     var sparkRef = self._firebase.child("sparks").child(sparkID);
     sparkRef.on("value", function(sparkSnap) {
-      onComplete(sparkSnap.name(), sparkSnap.val());
+      var ret = sparkSnap.val();
+      ret.pic = self._getPicURL(ret.author);
+      onComplete(sparkSnap.name(), ret);
     });
   });
 };
