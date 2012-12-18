@@ -371,6 +371,22 @@ label.checkbox input{margin-right: 5px;}
 
 /* Buttons
 ============================================================ */
+#spark-button-div{
+  height: 50px;
+}
+
+.msg{
+  border: 1px solid #AB8319;
+  border-radius: 5px;
+  color: #FFF;
+  font-family: 'Proxima Nova Bold', Arial, Helvetica, sans-serif;
+  font-size: 18px;
+  padding: 11px 20px;
+  text-align: center;
+  text-shadow: 0 -1px rgba(0,0,0,0.25);
+  visibility: hidden;
+}
+
 .btn{
   cursor: pointer;
   display: inline-block;

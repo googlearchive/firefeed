@@ -21,14 +21,13 @@ $(function() {
 function FirefeedUI() {
   this._limit = 120;
   this._loggedIn = false;
+  this._spinner = new Spinner();
   this._firefeed = new Firefeed("http://firefeed.firebaseio-staging.com/");
 
   // Setup history callbacks.
   var self = this;
   History.Adapter.bind(window, "statechange", function() {
     var state = History.getState();
-    console.log("Got statechange");
-    console.log(state);
     if (state.data && state.data.info) {
       self._loggedIn = state.data.info;
     }
@@ -48,19 +47,44 @@ FirefeedUI.prototype._pageController = function(url) {
   var hash = (idx > 0) ? window.location.href.slice(idx + 1) : "";
 
   console.log("Handling " + url + " -> " + hash);
-  console.log(this._loggedIn);
-
   switch (hash) {
     case "timeline":
     default:
       if (this._loggedIn) {
         this.renderTimeline(this._loggedIn);
+        History.pushState({}, "", "/?timeline");
       } else {
         this.renderHome();
         History.pushState({}, "", "/");
       }
       break;
   }
+};
+
+FirefeedUI.prototype._postHandler = function(e) {
+  var sparkText = $("#spark-input");
+  var sparkButton = $("#spark-button");
+  var containerEl = $("#spark-button-div");
+  var message = $("<div>", { class: "msg" }).html("Posting...");
+
+  var self = this;
+  e.preventDefault();
+  sparkButton.replaceWith(message);
+  self._spinner.spin(containerEl.get(0));
+  self._firefeed.post(sparkText.val(), function(err, done) {
+    if (!err) {
+      message.html("Posted!").css("background", "#008000");
+      sparkText.val("");
+    } else {
+      message.html("Posting failed!").css("background", "#FF6347");
+    }
+    self._spinner.stop();
+    message.css("visibility", "visible");
+    message.fadeOut(1500, function() {
+      message.replaceWith(sparkButton);
+      sparkButton.click(self._postHandler.bind(self));
+    });
+  });
 };
 
 FirefeedUI.prototype.login = function(cb) {
@@ -103,15 +127,20 @@ FirefeedUI.prototype.renderHome = function() {
   $("#body").html(body);
 
   var self = this;
-  $("#login-button").click(function(e) {
+  var loginButton = $("#login-button");
+  loginButton.click(function(e) {
+    e.preventDefault();
+    loginButton.css("visibility", "hidden");
+    self._spinner.spin($("#login-div").get(0));
     self._firefeed.login(false, function(err, info) {
       if (err) {
-        console.log("Error logging in: " + err);
+        self._spinner.stop();
+        loginButton.css("visibility", "visible");
+        console.log(err);
       } else {
         History.pushState({info: info}, "", "/?timeline");
       }
     });
-    e.preventDefault();
   });
 };
 
@@ -128,20 +157,28 @@ FirefeedUI.prototype.renderTimeline = function(info) {
 
   // Attach textarea handlers.
   var self = this;
+  var charCount = $("#c-count");
+  var sparkText = $("#spark-input");
+  $("#spark-button").css("visibility", "hidden");
   function _textAreaHandler() {
-    var textarea = $("#spark-input");
-    var text = textarea.val();
-
-    $("#c-count").text("" + (self._limit - text.length));
+    var text = sparkText.val();
+    charCount.text("" + (self._limit - text.length));
     if (text.length > self._limit) {
-      $("#c-count").css("color", "red");
+      charCount.css("color", "#FF6347");
+      $("#spark-button").css("visibility", "hidden");
+    } else if (text.length == 0) {
+      $("#spark-button").css("visibility", "hidden");
     } else {
-      $("#c-count").css("color", "#999");
+      charCount.css("color", "#999");
+      $("#spark-button").css("visibility", "visible");
     }
   };
-  $("#c-count").text(self._limit);
-  $("#spark-input").keyup(_textAreaHandler);
-  $("#spark-input").blur(_textAreaHandler);
+  charCount.text(self._limit);
+  sparkText.keyup(_textAreaHandler);
+  sparkText.blur(_textAreaHandler);
+
+  // Attach post spark button.
+  $("#spark-button").click(self._postHandler.bind(self));
 
   // Attach suggested user event.
   self._firefeed.onNewSuggestedUser(function(userid, info) {

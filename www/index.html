@@ -62,7 +62,7 @@
           </h2>
           <p class="big-copy pushv8">Feel free to use and modify this in your own products and projects!</p>
           
-          <div class="pushv4">
+          <div id="login-div" class="pushv4">
             <a id="login-button" href="#" class="btn clean">
               <span class="icon facebook"></span>
               <span>Sign in with Facebook</span>
@@ -89,7 +89,9 @@
             <textarea id="spark-input" class="text" rows="4" cols="10" placeholder="Share an update"></textarea>
           </div>
           <small class="field-help"><span id="c-count"></span> characters remaining</small>
-          <a id="spark-button" href="" class="btn default full pushv4">Update Status</a>
+          <div id="spark-button-div">
+            <a id="spark-button" href="#" class="btn default full pushv4">Update Status</a>
+          </div>
           
           <div class="separator pushv4"></div>
           
@@ -120,7 +122,7 @@
         <div class="media pushv4">
           <div class="img avatar"><img src="{{pic}}}}" alt="{{name}}" /></div>
           <div class="body">
-            <p class="big-copy end">{{name}}</p>
+            <p class="big-copy end">{{fullName}}</p>
             <p class="copy pushv">{{bio}}</p>
             <a href="javascript:followUser({{id}});" class="btn default small">Follow</a>
           </div>
@@ -141,13 +143,14 @@
       <script src="//cdnjs.cloudflare.com/ajax/libs/selectivizr/1.0.2/selectivizr-min.js"></script>
     <![endif]-->
 
-    <!-- Firebase.js and auth client must be included before Firefeed -->
-    <script src="//cdn-staging.firebase.com/v0/firebase.js"></script>
-    <script src="//cdn-staging.firebase.com/v0/firebase-auth-client.js"></script>
-
     <!-- Templates by Mustache, History.js for pushState -->
     <script src="//cdnjs.cloudflare.com/ajax/libs/mustache.js/0.7.0/mustache.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/history.js/1.7.1/native.history.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/spin.js/1.2.7/spin.min.js"></script>
+
+    <!-- Firebase.js and auth client must be included before Firefeed -->
+    <script src="//cdn-staging.firebase.com/v0/firebase.js"></script>
+    <script src="//cdn-staging.firebase.com/v0/firebase-auth-client.js"></script>
 
     <!-- Finally, the Firefeed code -->
     <script src="js/firefeed.js"></script>
