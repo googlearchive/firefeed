@@ -185,5 +185,14 @@ FirefeedUI.prototype.renderTimeline = function(info) {
     info.id = userid;
     $(Mustache.to_html($("#tmpl-suggested-user").html(), info)).
       appendTo("#suggested-users");
+    var button = $("#followBtn-" + userid);
+    button.click(function(e) {
+      e.preventDefault();
+      button.remove();
+      self._firefeed.follow(userid, function(err, done) {
+        // TODO FIXME: Check for errors!
+        $("#followBox-" + userid).fadeOut(1500);
+      });
+    });
   });
 };

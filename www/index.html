@@ -119,12 +119,12 @@
       </script>
 
       <script id="tmpl-suggested-user" type="text/html">
-        <div class="media pushv4">
+        <div class="media pushv4" id="followBox-{{id}}">
           <div class="img avatar"><img src="{{pic}}}}" alt="{{name}}" /></div>
           <div class="body">
             <p class="big-copy end">{{fullName}}</p>
             <p class="copy pushv">{{bio}}</p>
-            <a href="javascript:followUser({{id}});" class="btn default small">Follow</a>
+            <a id="followBtn-{{id}}" class="btn default small">Follow</a>
           </div>
         </div>
       </script>
