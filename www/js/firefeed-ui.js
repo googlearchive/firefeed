@@ -186,6 +186,7 @@ FirefeedUI.prototype.renderTimeline = function(info) {
     $(Mustache.to_html($("#tmpl-suggested-user").html(), info)).
       appendTo("#suggested-users");
     var button = $("#followBtn-" + userid);
+    // Fade out the suggested user if they were followed successfully.
     button.click(function(e) {
       e.preventDefault();
       button.remove();
