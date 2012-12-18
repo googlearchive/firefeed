@@ -180,10 +180,13 @@ FirefeedUI.prototype.renderTimeline = function(info) {
   // Attach post spark button.
   $("#spark-button").click(self._postHandler.bind(self));
 
-  // Attach new spark event/
-  self._firefeed.onNewSpark(function(sparkId, spark) {
+  // Attach new spark event handler, cap at 100 sparks.
+  self._firefeed.onNewSpark(2, function(sparkId, spark) {
+    spark.sparkId = sparkId;
     $(Mustache.to_html($("#tmpl-spark").html(), spark)).
       appendTo("#spark-list");
+  }, function(sparkId) {
+    $("#spark-" + sparkId).remove();
   });
 
   // Attach suggested user event.

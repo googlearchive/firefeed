@@ -305,9 +305,23 @@ Firefeed.prototype.onNewSuggestedUser = function(onComplete) {
  * spark (see Firefeed.post), which will appear in real-time on the current
  * user's feed!
  *
- * We'll limit the number of sparks to 100, i.e. only invoke the callback
- * for the 100 latest sparks. The callback will also be called for any sparks
- * that are added subsequently.
+ * You can limit the number of sparks that you'll get by passing a number as
+ * the first argument. The onComplete callback will called only for the 100
+ * latest sparks. The callback will also be called for any sparks that are
+ * added subsequently, but if the total number of sparks exceeds the number
+ * provided, the onOverflow callback will be called to compensate.
+ *
+ * To hook this up to the DOM, simply display a spark in your onComplete
+ * callback, but also remove the spark in the onOverflow callback. This will
+ * ensure that the total number of sparks displayed on your page will never
+ * exceed the number specified (default is 100).
+ *
+ * @param    {number}    totalCount  The maximum number of sparks to report.
+ *                                   If new sparks are added after this event
+ *                                   handler is set, they will also be reported
+ *                                   but the onOverflow callback will be
+ *                                   invoked with the oldest sparks to
+ *                                   compensate.
  *
  * @param    {Function}  onComplete  The callback to call whenever a new spark
  *                                   appears on the current user's stream. The
@@ -316,13 +330,26 @@ Firefeed.prototype.onNewSuggestedUser = function(onComplete) {
  *                                   ID and the second an object containing the
  *                                   "author", "by", "pic" and "content"
  *                                   properties.
+ *
+ * @param    {Function}  onOverflow  The callback that will be called when
+ *                                   onComplete has already been called
+ *                                   totalCount times, to keep the total number
+ *                                   of reported sparks capped at totalCount.
+ *                                   This will be called with one argument,
+ *                                   the spark ID of the spark expected to
+ *                                   removed (the oldest spark).    
  */
-Firefeed.prototype.onNewSpark = function(onComplete) {
+Firefeed.prototype.onNewSpark = function(totalCount, onComplete, onOverflow) {
   var self = this;
+  var count = totalCount || 100;
   self._validateCallback(onComplete);
+  self._validateCallback(onOverflow);
 
+  // We want the latest count sparks.
+  var stream = self._mainUser.child("stream").limit(count);
+  
   // We simply listen for new children on the current user's stream.
-  self._mainUser.child("stream").limit(100).on("child_added", function(snap) {
+  stream.on("child_added", function(snap) {
     // When a new spark is added, fetch the content from the master spark list
     // since streams only contain references in the form of spark IDs.
     var sparkID = snap.name();
@@ -332,5 +359,10 @@ Firefeed.prototype.onNewSpark = function(onComplete) {
       ret.pic = self._getPicURL(ret.author);
       onComplete(sparkSnap.name(), ret);
     });
+  });
+
+  // Also listen for child_removed so we can call onOverflow appropriately.
+  stream.on("child_removed", function(snap) {
+    onOverflow(snap.name());
   });
 };
