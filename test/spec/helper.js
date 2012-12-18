@@ -25,8 +25,8 @@ var makeAndLoginAs = function(user, cb) {
   ff.login(true, function(err, info) {
     expect(err).toBe(false);
     expect(info.name).toBe(user);
-    expect(info.bio).toBe("");
-    expect(info.location).toBe("");
+    expect(info.bio).toBe(" ");
+    expect(info.location).toBe(" ");
     expect(typeof info.pic).toBe(typeof "");
     expect(ff._firebase).toNotBe(null);
     cb(ff);

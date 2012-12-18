@@ -1,36 +1,88 @@
 
 var __ff_ui;
-
 $(function() {
-  __ff_ui = new FirefeedUI();
-  History.Adapter.bind(window, 'statechange', function() {
-    var state = History.getState();
-    switch (state.url) {
-      case "?":
-        __ff_ui.renderHome(true);
-        break;
-      case "?timeline":
-        __ff_ui.renderTimeline(state.data["info"]);
-        break;
-      default:
-        __ff_ui.renderHome(true);
-    }
-  });
+  // Load the Facebook SDK, then initialize FirefeedUI;
+  window.fbAsyncInit = function() {
+    FB.init({
+      appId      : "104907529680402",
+      channelUrl : "channel.html"
+    });
+    __ff_ui = new FirefeedUI();
+  };
+  (function(d, debug){
+    var js, id = "facebook-jssdk", ref = d.getElementsByTagName("script")[0];
+    if (d.getElementById(id)) {return;}
+    js = d.createElement("script"); js.id = id; js.async = true;
+    js.src = "//connect.facebook.net/en_US/all" + (debug ? "/debug" : "") + ".js";
+    ref.parentNode.insertBefore(js, ref);
+  }(document, /*debug*/ false));
 });
 
 function FirefeedUI() {
   this._limit = 120;
+  this._loggedIn = false;
   this._firefeed = new Firefeed("http://firefeed.firebaseio-staging.com/");
-  this.renderHome();
+
+  // Setup history callbacks.
+  var self = this;
+  History.Adapter.bind(window, "statechange", function() {
+    var state = History.getState();
+    console.log("Got statechange");
+    console.log(state);
+    if (state.data && state.data.info) {
+      self._loggedIn = state.data.info;
+    }
+    self._pageController(state.url);
+  });
+
+  // Figure out if the user is logged in or not, with silent login.
+  self.login(function(info) {
+    self._loggedIn = info;
+    self._pageController(window.location.href);
+  });
 }
+
+FirefeedUI.prototype._pageController = function(url) {
+  // Extract sub page from URL, if any.
+  var idx = url.indexOf("?");
+  var hash = (idx > 0) ? window.location.href.slice(idx + 1) : "";
+
+  console.log("Handling " + url + " -> " + hash);
+  console.log(this._loggedIn);
+
+  switch (hash) {
+    case "timeline":
+    default:
+      if (this._loggedIn) {
+        this.renderTimeline(this._loggedIn);
+      } else {
+        this.renderHome();
+        History.pushState({}, "", "/");
+      }
+      break;
+  }
+};
+
+FirefeedUI.prototype.login = function(cb) {
+  // Try silent login in case the user is already logged in.
+  var self = this;
+  self._firefeed.login(true, function(err, info) {
+    if (!err && info) {
+      cb(info);
+    } else {
+      cb(false);
+    }
+  });
+};
 
 FirefeedUI.prototype.logout = function(e) {
   this._firefeed.logout();
-  History.pushState({logout: true}, "", "?");
+  this._loggedIn = false;
+  History.pushState({}, "", "/");
   e.preventDefault();
-}
+};
 
-FirefeedUI.prototype._renderHome = function() {
+FirefeedUI.prototype.renderHome = function() {
   $("#header").html($("#tmpl-index-header").html());
 
   // Preload animation.
@@ -56,32 +108,10 @@ FirefeedUI.prototype._renderHome = function() {
       if (err) {
         console.log("Error logging in: " + err);
       } else {
-        self.renderTimeline(info);
-        History.pushState({info: info}, "", "?timeline");
+        History.pushState({info: info}, "", "/?timeline");
       }
     });
     e.preventDefault();
-  });
-}
-
-FirefeedUI.prototype.renderHome = function(logout) {
-  var self = this;
-  if (logout) {
-    // Don't check if user is logged in.
-    self._renderHome();
-    return;
-  }
-
-  // Try silent login in case the user is already logged in.
-  self._firefeed.login(true, function(err, info) {
-    if (!err && info) {
-      // Redirect to timeline.
-      self.renderTimeline(info);
-      History.pushState({info: info}, "", "?timeline");
-    } else {
-      // They aren't logged in, show home page.
-      self._renderHome();
-    }
   });
 };
 
