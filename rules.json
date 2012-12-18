@@ -14,21 +14,21 @@
         // The user is allowed to write everything in their bucket.
         ".write": "$userid == auth.id",
         "following": {
-          // Only a user that's in the "people" list can be followed.
+          // The following list should only contain actual ids from the "people" list. 
           "$followingid": {
-            ".write": "root.child('people').hasChild($followingid)"
+            ".validate": "root.child('people').hasChild($followingid)"
           }
         },
         "followers": {
-          // Anyone can subscribe to this user's sparks.
+          // Anyone can add themself to to this user's followers list.
           "$followerid": {
             ".write": "$followerid == auth.id"
           }
         },
         "stream": {
           "$sparkid": {
-            // User A can write in user's B stream, but only if A is following B, and only for sparks for which they are the author.
-            ".write": "root.child('users').child($userid).child('following').hasChild(auth.id) && root.child('sparks').child($sparkid).child('author').val() == auth.id"
+            // User A can write in user B's stream, but only if A is following B, and only for sparks for which they are the author.
+            ".write": "root.child('users/' + $userid + '/following').hasChild(auth.id) && root.child('sparks/' + $sparkid + '/author').val() == auth.id"
           }
         }
       }
@@ -37,8 +37,9 @@
       // A global list of sparks (the "firehose").
       "$sparkid": {
         // Modifying an existing spark is not allowed.
-        ".write": "data.val() == null",
-        ".validate": "newData.hasChild('author')",
+        ".write": "!data.exists()",
+        // Every spark should have an author and a body.
+        ".validate": "newData.hasChildren(['author', 'content'])",
         // A user can attribute a spark only to themselves.
         "author": {
           ".validate": "newData.val() == auth.id"
@@ -50,3 +51,4 @@
     }
   }
 }
+
