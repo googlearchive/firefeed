@@ -105,11 +105,26 @@
         </div>
       </script>
 
+      <script id="tmpl-profile-content" type="text/html">
+        <div class="threefifth center">
+          <div class="aligncenter pushv4">
+            <div class="img avatar big pushv2 center">
+              <img src="{{pic}}" alt="{{name}}" />
+            </div>
+            <h2 class="pushv">{{fullName}}</h2>
+            <p class="big-copy pushv">{{location}}</p>
+            <p class="big-copy end">{{bio}}</p>
+          </div>
+          <ul id="spark-list" class="item-list">
+          </ul>
+        </div>
+      </script>
+
       <script id="tmpl-spark" type="text/html">
         <li id="spark-{{sparkId}}">
           <div class="media">
             <div class="img avatar clean"><img src="{{pic}}" alt="{{by}}" /></div>
-            <div class="body">
+            <div class="body {{relative}}">
               <p class="title end">{{by}}</p>
               <p class="main-copy pushv">{{content}}</p>
               <p class="meta end">{{timestamp}}</p>

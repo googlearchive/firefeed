@@ -44,10 +44,21 @@ function FirefeedUI() {
 FirefeedUI.prototype._pageController = function(url) {
   // Extract sub page from URL, if any.
   var idx = url.indexOf("?");
-  var hash = (idx > 0) ? window.location.href.slice(idx + 1) : "";
+  var hash = (idx > 0) ? url.slice(idx + 1) : "";
 
   console.log("Handling " + url + " -> " + hash);
   switch (hash) {
+    case "profile":
+      // Extract user ID.
+      idx = hash.indexOf("=");
+      var uid = (idx > 0) ? hash.slice(idx + 1) : "";
+      if (uid == "" && !this._loggedIn) {
+        this.render404({}, "", "/?404");
+      } else {
+        this.renderProfile(uid);
+        History.pushState({}, "", "?profile=" + uid);
+      }
+      break;
     case "timeline":
     default:
       if (this._loggedIn) {
@@ -104,6 +115,10 @@ FirefeedUI.prototype.logout = function(e) {
   this._loggedIn = false;
   History.pushState({}, "", "/");
   e.preventDefault();
+};
+
+FirefeedUI.prototype.render404 == function() {
+
 };
 
 FirefeedUI.prototype.renderHome = function() {
@@ -207,5 +222,20 @@ FirefeedUI.prototype.renderTimeline = function(info) {
         $("#followBox-" + userid).fadeOut(1500);
       });
     });
+  });
+};
+
+FirefeedUI.prototype.renderProfile = function(uid) {
+  $("#header").html($("#tmpl-page-header").html());
+  $("#logout-button").click(this.logout.bind(this));
+
+  // Render profile page body.
+  var self = this;
+  self._firefeed.getUserInfo(uid, function(info) {
+    var content = Mustache.to_html($("#tmpl-profile-content").html(), info);
+    var body = Mustache.to_html($("#tmpl-content").html(), {
+      classes: "cf", content: content
+    });
+    $("#body").html(body);
   });
 };
