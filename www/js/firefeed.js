@@ -46,7 +46,7 @@ Firefeed.prototype = {
     return match && decodeURIComponent(match[1].replace(/\+/g, " "));
   },
   _getPicURL: function(id, large) {
-    return "https://graph.facebook.com/" + (id || self._userid) +
+    return "https://graph.facebook.com/" + (id || this._userid) +
            "/picture/?type=" + (large ? "large" : "square") +
            "&return_ssl_resources=1";
   },
