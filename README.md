@@ -1,6 +1,5 @@
 Firefeed
 ========
-
 Firefeed is a web app that lets users post small messages called *sparks* to
 their stream. You can follow other users, and their sparks will appear on your
 stream.
@@ -14,15 +13,26 @@ HTML/CSS/JS files, of course.
 This is made possible by [Firebase](http://firebase.com/). A detailed explanation
 of how the app was built is [available here](http://firefeed.io/about.html).
 
-Layout
-------
-
+Navigating the Code
+-------------------
 The core application logic is in www/js/firefeed.js. It is hooked up to the
 UI in www/index.html via www/js/firefeed-ui.js.
+[firefeed.js](http://github.com/firebase/firefeed/blob/master/firefeed.js) consists of 11
+public methods, all of which are documented with jsdoc.
 
-If you'd like to embed a stream like Firefeed into your app, we recommend you
-import firefeed.js and hooking it up to your own UI. Take a look at
+If you'd like to embed a stream like Firefeed into your app, we recommend
+importing firefeed.js and hooking it up to your own UI. Take a look at
 firefeed-ui for an example of how this is done!
+
+Exercises for the reader
+------------------------
+1. Implement unfollowing a user.
+2. Implement protected accounts. If a user opts into a protected account, their
+sparks can only be viewed by people they approve.
+3. Implement search based on #hashtags. Hint: Instead of searching for the
+actual value through the global list of sparks, consider creating a new bucket
+for every hashtag when it is first used, and then populating it with spark
+references.
 
 Help
 ----

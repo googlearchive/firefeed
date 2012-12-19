@@ -584,6 +584,10 @@ span.italic {
   font-family: 'Proxima Nova Italic', Arial, Helvetica, sans-serif !important;
 }
 
+span.bold {
+  font-family: 'Proxima Nova Bold', Arial, Helvetica, sans-serif !important;
+}
+
 .about ul{
   list-style-image: url(../img/favicon.png);
   padding-left: 50px;

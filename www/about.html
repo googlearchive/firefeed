@@ -40,22 +40,21 @@
             <div class="about">
               <h2>Overview</h2>
               <p>
-                Firefeed is an application modeled after <a target="_blank" href="http://twitter.com">Twitter</a>,
-                a site where users can post short messages, follow other users, and have their
-                messages show up on a stream as soon as they are posted.
+                Firefeed is an application modeled after <a target="_blank" href="http://twitter.com">Twitter</a>.
+                You can post short messages, follow other users, and view messages as soon as they are posted.
               </p>
               <p>
                 So what's special about Firefeed?
                 <ul>
-                  <li><span class="italic">It's an entirely client side app</span>.<br/><br/>
-                  This means that no special server logic is needed for its functionality.
+                  <li><span class="bold">It's an entirely client side app</span>.<br/><br/>
+                  No server logic or servers are needed.
                   Any place that can host static content, for example
                   <a target="_blank" href="http://pages.github.com">Github Pages</a> or
                   <a target="_blank" href="http://site44.com/">Site44</a>, will be able to run this app
                   by simply serving the requisite HTML, CSS and JS files. You can easily serve it
                   from a CDN, since there's no dynamic content or caching to worry about!</li>
 
-                  <li><span class="italic">The core logic is less than 500 lines of code</span>.<br/><br/>
+                  <li><span class="bold">The core logic is less than 500 lines of code</span>.<br/><br/>
                   Excluding the user interface, all the application logic is in two files:
                   <a target="_blank" href="http://github.com/firebase/firefeed/blob/master/www/js/firefeed.js">firefeed.js</a>
                   and
@@ -66,13 +65,10 @@
                 </ul>
               </p>
               <p>
-                This is made possible by <a target="_blank" href="http://firebase.com">Firebase</a>,
-                a scalable real-time backend with a simple JS API. All the messages posted by users
-                on this site are stored there, and the API is used to update every user's web
-                page with the latest messages in realtime. Firebase also supports a rules language,
-                that allows the developer to enforce certain security requirements on the app.
+                Firefeed is made possible by <a target="_blank" href="http://firebase.com">Firebase</a>,
+                a scalable real-time backend with a simple JS API.  All Firefeed messages are stored there, and the API is used to update every user's stream with the latest messages in realtime. Firebase also has a rules language, that allows the developer to enforce certain security requirements.
               </p>
-              <p>Sound interesting? Let's delve into the details. We'll assume you know a little
+              <p><span class="italic">Sound interesting?</span> Let's delve into the details. We'll assume you know a little
                 about Firebase and how data is stored in it. Be sure to read through
                 the <a target="_blank" href="https://www.firebase.com/docs/">basic documentation</a> for Firebase
                 if you haven't already, or take the quick <a target="_blank" href="http://www.firebase.com/tutorial/">5-minute tutorial</a>!
@@ -80,12 +76,13 @@
               <hr/>
               <h3>Authentication</h3>
               <p>The very first step the user must perform in order to post a message
-              on the site is to login in order to prove who they are. We use Facebook
+              on the site is to login. We use Facebook
               to authenticate the user, which looks something like this:
                 <img src="img/auth.png"/>
               </p>
-              <p>In essence, we exchange a Facebook auth token for one from Firebase.
-                This works because when we
+              <p>We first obtain a Facebook OAuth token for the current user after
+                they log in using the Facebook SDK, and then exchange it for
+                a token from Firebase. When we
                 <a target="_blank" href="https://www.firebase.com/docs/security/simple-login-facebook.html">configured</a>
                 our Firebase namespace, we entered our Facebook application ID and
                 secret. Thus, Firebase can be assured that the token could only have
@@ -96,25 +93,23 @@
               <pre class="prettyprint lang_js">
 
     var firebase = new Firebase("https://firefeed.firebaseio.com/");
-    var authClient = new FirebaseAuthClient(firebase, {
-      endpoint: "https://auth.firebase.com/auth"
-    });
+    var authClient = new FirebaseAuthClient(firebase);
     authClient.login("facebook", function(err, token, info) {
-      console.log("Got token " + token + " for user " + info.name);
+      if (!err) {
+        console.log("Got token " + token + " for user " + info.name);
+      }
     });</pre><br/>
-              <p>That's it! We have now acquired a Firebase token for the user
+              <p>That's it! We now have a Firebase token for the user
               who just logged in and authenticated our Firebase reference with it.</p>
               <hr/>
               <h3>Security</h3>
               <p>
-                Now that we have authenticated as a particular user, we'll
-                need to specify some rules as to how the data must be handled by
-                Firebase. This is how we ensure that our client-only app is secure.
+                Now we’ve implemented authentication, we'll specify some rules about how the data must be handled by Firebase. This is how we ensure our client-only app is secure.
               </p>
               <p>Before we dive into the rules themselves, it's important to note that
-                the rules are tightly coupled to the data structure of your app itself.
-                That's why we're doing the rules first, even before we've decided how
-                we're going to store our app's data. Because all the rules are in one place,
+                the rules are tightly coupled to the data structure of your app.
+                <span class="bold">That's why we're doing the rules first, before we've decided
+                  how to structure our data</span>. Since all the rules are in one place,
                 it's much easier to think and reason about your data!
               </p>
 
@@ -128,9 +123,9 @@
                   by the user that created them once they've been posted.</li>
                 <li>Every user has their own list of sparks posted, and nobody should
                   be able to add to this list but the user.</li>
-                <li>Every user has their own stream, which is a combined list of all
+                <li>Every user has their own feed, which is a combined list of all
                   sparks posted by them, and by all the users that they are following.
-                  No other sparks must appear in this stream.</li>
+                  No other sparks must appear in this feed.</li>
                 <li>Every spark post should be attributed to the currently logged in
                   user, and users should not be able to spoof one another.</li>
               </ul>
@@ -140,7 +135,7 @@
                   <li><code>people</code>: A list of registered users.</li>
                   <li><code>users</code>: A dictionary containing a key for
                   every user which will contain their personal data (spark list
-                  and stream).</li>
+                  and feed).</li>
                   <li><code>sparks</code>: A global list of sparks posted on
                   the site along with their metadata.</li>
                 </ul>
@@ -157,9 +152,11 @@
       }
     }</pre><br/>
               <p>
-                For the list of registered users we'll have to ensure that
-                only the user who is currently logged in can add an entry that
-                represents themselves. Remember the authentication token
+                The <code>people</code> key contains the list of registered users,
+                and we must ensure that a user should only be able to add their
+                own entry. We'll also let them modify the entry if they wish,
+                because we'll store some metadata about the user (such as the
+                profile picture URL) here.  Remember the authentication token
                 we obtained earlier? The token also contains the user ID of the
                 user to whom the token was issued, which we will refer to in our
                 rules as <code>auth.id</code>:
@@ -168,22 +165,20 @@
 
     {
       people: {
-        $userid: 
+        $userid: {
           ".write": $userid == auth.id
+        }
       }
     }</pre><br/>
             <p>
               The variable <code>$userid</code> refers to the key under <code>people</code>
-              for which the rule is evaluated. Therefore, this rule enforces that only
-              the currently logged in user can write to their own entry. Yay!
+              for which the rule is evaluated. The write rule enforces that only
+              the currently logged in user can write their own entry. Cool!
             </p>
             <p>
               Now, every user should be able to write into their own personal data
               bucket. Let's have every user bucket contain three properties:
-              a list of sparks posted by them, a list of users they follow, and
-              a list of users who follow them. If you're wondering why we
-              chose this particular structure, hold that thought, we'll come back to
-              it in a minute!
+              (1) a list of sparks posted by them, (2) a list of users they follow, and (3) a list of users who follow them. If you're wondering why we chose this particular structure, hold that thought, we'll come back to it in a minute!
             </p>
             <pre class="prettyprint lang_js">
 
@@ -193,28 +188,28 @@
           ".write": $userid == auth.id,
           following: {},
           followers: {},
-          stream: {}
+          feed: {}
         }
       }
     }</pre><br/>
             <p>
-              Ok, so far so good. The write rule above will evaluate to true for
+              So far so good. The write rule above will evaluate to true for
               the currently logged in user, and they'll be able to write to
-              their data bucket. But wait, wasn't the top-level write rule
-              set to false? Yes, but Firebase will allow a write even if any
+              their data bucket. <span class="italic">But wait, wasn't the top-level write rule
+              set to false?</span> Yes, but Firebase will allow a write even if any
               one of the write rules in the path from a node to the root of the
               tree evaluates to true. Nifty!
             </p>
             <p>
-              We're not quite done yet, because other users, even those that
-              the current user follows, won't be able to write to the stream.
+              We're not quite done yet, because even if the current
+              user follows someone, their messages won't appear.
               We want to allow anyone who the user is following to be able
-              to write to the stream:
+              to write to the current user's feed:
             </p>
             <pre class="prettyprint lang_js">
 
     {
-      stream: {
+      feed: {
         "$sparkid": {
           ".write":
             root.child('users/' + $userid + '/following').hasChild(auth.id) &&
@@ -222,17 +217,17 @@
         }
       }
     }</pre><br/>
-            <p>Let's break those rules down. It consists of two expressions that
-              must both evaluate to true for the write to be allowed. It also
-              makes use of the special <code>root</code>
-              variable which points to the top-level key.
+            <p>Let's break these rules down.  They consist of two expressions that must both evaluate to true for the write to be allowed. They also make use of the special <code>root</code> variable which points to the top-level of our Firebase data.
             </p>
-            <p>The first rule checks if the user trying to
-              write is in the <code>following</code> list of the user whose stream they're
-              trying to write to. The second rule checks if the author of the spark
+            <p>The first rule specifies that only the people followed by a particular
+              user are able to write to that user's feed. For example, if user A
+              follows user B, user B can write to user A's feed. The second rule
+              checks if the author of the spark
               being written is the same as the user who's trying to do the write.
+              This means that user B can only write sparks authored by themselves into
+              user A's feed.
             </p>
-            <p>Great! Now let's make sure that every user in the <code>following</code>
+            <p>Now let's make sure that every user in the <code>following</code>
               list is a valid user, and that anyone is able to add themselves to
               the <code>follower</code> list:
             </p>
@@ -282,13 +277,8 @@
             <hr/>
             <h3>Application Logic</h3>
 
-            <p>Let's come back to why we decided to structure
-            the data this way. All entries in the spark list and stream for
-            every user will only contain spark IDs, and the contents themselves
-            will have to be fetched from the global spark list. So when a user
-            posts a spark, we will simply put the content in the global list,
-            and then put the ID of the spark in the stream of every user that's
-            following them.</p> 
+            <p>Let's come back to why we decided on this data structure:
+A users stream and a user’s sparks will just be a list of spark IDs. The actual spark data will be stored in a global spark list. When a new spark is posted, we’ll it in the global list, and then put its ID in the feed of every user that is following the author.</p> 
 
 <pre class="prettyprint lang_js">
 
@@ -303,25 +293,23 @@
   var currentUser = firebase.child("users").child(userid);
   currentUser.child("sparks").child(sparkRefId).set(true);
 
-  // Add spark ID to the stream of everyone following this user.
+  // Add spark ID to the feed of everyone following this user.
   currentUser.child("followers").once("value", function(list) {
     list.forEach(function(follower) {
       var childRef = firebase.child("users").child(follower.name());
-      childRef.child("stream").child(sparkRefId).set(true);
+      childRef.child("feed").child(sparkRefId).set(true);
     });
   });
     </pre><br/>
 
-            <p>Why do it this way? We're trading off a little bit of extra
-              space for performance and scalability. Because we store a
-              reference to sparks in everyone's stream, we don't have to
-              look anywhere other than a single node to aggregate all incoming
-              messages for a single user:
+            <p>Why this structure? We're optimizing for performance and scalability. When we need to display
+              the feed for a particular user, we only need to look in a single
+              place:
             </p>
 <pre class="prettyprint lang_js">
 
-  var stream = firebase.child("users").child(userid).child("stream");
-  stream.on("child_added", function(snapshot) {
+  var feed = firebase.child("users").child(userid).child("feed");
+  feed.on("child_added", function(snapshot) {
     var sparkID = snapshot.name();
     var sparkRef = firebase.child("sparks").child(sparkID);
     sparkRef.on("value", function(spark) {
@@ -331,14 +319,33 @@
           <p>
             With Firebase <a target="_blank" href="http://www.firebase.com/docs/queries.html">queries and limits</a>,
             we can also limit the output to the latest
-            100 sparks so we don't fetch any more data than is needed.
-            Structuring our data in this manner is more efficient than having to
-            setup listeners for every user that the current user is following.
+            100 sparks so we don't fetch any more data than is needed,
+            further improving our performance.
           </p>
+
           <hr/>
+
+          <h3>Exercises for the reader</h3>
+          <p>
+            This is just the foundation for a Twitter-like system. There are many features one can
+            add to customize the experience. Here are some ideas to get you started!
+
+            <ul>
+              <li>Implement unfollowing a user.</li>
+              <li>Implement protected accounts. If a user opts into a protected account, their
+                sparks can only be viewed by people they approve.</li>
+              <li>Implement search based on #hashtags. Hint: Instead of searching for the
+                actual value through the global list of sparks, consider creating a new
+                bucket for every hashtag when it is first used, and then populating it with spark
+                references.</li>
+            </ul>
+          </p>
+
+          <hr/>
+
           <h3>We did it!</h3>
           <p>
-            That was the story of how you can build a twitter clone in
+            That was the story of how you can build a Twitter clone in
             under 500 lines of well commented code with copious whitespace.
           </p>
           <p>We're pretty excited about this novel
@@ -347,6 +354,7 @@
             range of innovative applications. We can't wait to see what you'll come
             up with, and we're <a target="_blank" href="https://www.firebase.com/docs/contact.html">here to help</a>!
           </p>
+
           <hr/>
             </div>
           </div> 
