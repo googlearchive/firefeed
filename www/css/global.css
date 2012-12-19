@@ -386,7 +386,8 @@ label.checkbox input{margin-right: 5px;}
 }
 
 .editable input {
-
+  margin-top: -3px;
+  background: inherit;
 }
 
 /* Buttons
@@ -401,6 +402,10 @@ label.checkbox input{margin-right: 5px;}
   -o-transition: all 0.2s ease;
   -webkit-transition: all 0.2s ease;
   transition: all 0.2s ease;
+}
+
+.btn:hover {
+  border-bottom: inherit;
 }
 
 .ie7 .btn{display: inline;}

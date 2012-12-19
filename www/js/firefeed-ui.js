@@ -142,6 +142,7 @@ FirefeedUI.prototype.logout = function(e) {
   }
   this._firefeed.logout();
   this._loggedIn = false;
+  this.renderHome();
 };
 
 FirefeedUI.prototype.render404 == function() {
