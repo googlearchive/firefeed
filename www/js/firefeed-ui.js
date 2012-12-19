@@ -197,6 +197,10 @@ FirefeedUI.prototype.renderTimeline = function(info) {
   $("#header").html($("#tmpl-page-header").html());
   $("#logout-button").click(this.logout.bind(this));
 
+  // Render placeholders for location / bio if not filled in.
+  info.location = info.location || "Your Location...";
+  info.bio = info.bio || "Your Bio...";
+
   // Render body.
   var content = Mustache.to_html($("#tmpl-timeline-content").html(), info);
   var body = Mustache.to_html($("#tmpl-content").html(), {
