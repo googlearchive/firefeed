@@ -38,7 +38,6 @@ FirefeedUI.prototype._pageController = function(url) {
   var hash = (idx > 0) ? url.slice(idx + 1) : "";
   var value = hash.split("=");
 
-  console.log("Handling " + url + " -> " + value[0] + " = " + value[1]);
   switch (value[0]) {
     case "profile":
       if (!value[1]) {
