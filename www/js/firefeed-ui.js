@@ -336,11 +336,13 @@ FirefeedUI.prototype.renderProfile = function(uid) {
 
   // Update user info.
   self._firefeed.getUserInfo(uid, function(info) {
+    info.id = uid;
     var content = Mustache.to_html($("#tmpl-profile-content").html(), info);
     $("#profile-content").html(content);
+    var button = $("#followBtn-" + info.id);
+
     // Show follow button if logged in.
     if (self._loggedIn && self._loggedIn != info.id) {
-      var button = $("#followBtn-" + info.id);
       button.click(function(e) {
         e.preventDefault();
         self._firefeed.follow(info.id, function(err, done) {
@@ -348,6 +350,8 @@ FirefeedUI.prototype.renderProfile = function(uid) {
           $("#followBtn-" + info.id).fadeOut(1500);
         });
       });
+    } else {
+      button.hide();
     }
   });
 
