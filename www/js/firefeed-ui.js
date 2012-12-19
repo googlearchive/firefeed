@@ -19,7 +19,7 @@ $(function() {
 });
 
 function FirefeedUI() {
-  this._limit = 120;
+  this._limit = 141;
   this._loggedIn = false;
   this._spinner = new Spinner();
   this._firefeed = new Firefeed("http://firefeed.firebaseio.com/");
@@ -120,6 +120,7 @@ FirefeedUI.prototype._handleNewSpark = function(listId, limit, func) {
   func(
     limit,
     function(sparkId, spark) {
+      spark.content = spark.content.substring(0, self._limit);
       spark.sparkId = sparkId;
       spark.friendlyTimestamp = self._formatDate(
         new Date(spark.timestamp || 0)
@@ -353,16 +354,17 @@ FirefeedUI.prototype.renderSpark = function(id) {
 
   // Render spark page body.
   var self = this;
-  self._firefeed.getSpark(id, function(info) {
-    if (info !== null && info.author) {
-      self._firefeed.getUserInfo(info.author, function(authorInfo) {
+  self._firefeed.getSpark(id, function(spark) {
+    if (spark !== null && spark.author) {
+      self._firefeed.getUserInfo(spark.author, function(authorInfo) {
         for (var key in authorInfo) {
-          info[key] = authorInfo[key];
+          spark[key] = authorInfo[key];
         }
-        info.friendlyTimestamp = self._formatDate(
-          new Date(info.timestamp || 0)
+        spark.content = spark.content.substring(0, self._limit);
+        spark.friendlyTimestamp = self._formatDate(
+          new Date(spark.timestamp || 0)
         );
-        var content = Mustache.to_html($("#tmpl-spark-content").html(), info);
+        var content = Mustache.to_html($("#tmpl-spark-content").html(), spark);
         var body = Mustache.to_html($("#tmpl-content").html(), {
           classes: "cf", content: content
         });
