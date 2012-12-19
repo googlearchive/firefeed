@@ -308,7 +308,7 @@ FirefeedUI.prototype.renderStatus = function(id) {
           info[key] = authorInfo[key];
         }
         info.friendlyTimestamp = self._formatDate(
-          new Date(spark.timestamp || 0)
+          new Date(info.timestamp || 0)
         );
         var content = Mustache.to_html($("#tmpl-spark-content").html(), info);
         var body = Mustache.to_html($("#tmpl-content").html(), {
