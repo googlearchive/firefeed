@@ -327,10 +327,16 @@ Firefeed.prototype.post = function(content, onComplete) {
       // Then, we add the spark ID to the users own stream.
       self._mainUser.child("stream").child(sparkRefId).set(true);
 
-      // We also add ourself (with priority) to a list of users with recent activity
-      // which we can use elsewhere to see "active" users.
-      var recentUsersRef = self._firebase.child("recent-users").child(self._userid);
-      recentUsersRef.setWithPriority(true, new Date().getTime());
+      // We also add ourself (with priority) to a list of users with recent
+      // activity which we can use elsewhere to see "active" users.
+      var time = new Date().getTime();
+      var recentUsersRef = self._firebase.child("recent-users");
+      recentUsersRef.child(self._userid).setWithPriority(true, time);
+
+      // We'll also add the spark to a seperate list of most recent sparks
+      // which can be displayed elsewhere, just like active users above.
+      var recentSparkRef = self._firebase.child("recent-sparks");
+      recentSparkRef.child(sparkRefId).setWithPriority(true, time);
 
       // Finally, we add the spark ID to the stream of everyone who follows
       // the current user.
@@ -361,7 +367,8 @@ Firefeed.prototype.post = function(content, onComplete) {
  *
  * You need to be authenticated through login() to use this function.
  *
- * @param    {Function}  onSuggestedUser  The callback to call for each suggested user.
+ * @param    {Function}  onSuggestedUser  The callback to call for each
+ *                                        suggested user.
  */
 Firefeed.prototype.getSuggestedUsers = function(onSuggestedUser) {
   var self = this;
@@ -377,16 +384,17 @@ Firefeed.prototype.getSuggestedUsers = function(onSuggestedUser) {
     // following.
     var recentUsersQuery = self._firebase.child("recent-users").limit(20);
     var count = 0;
-    self._firebase.child("recent-users").once("value", function(recentUsersSnap) {
+    
+    var recentUsersRef = self._firebase.child("recent-users");
+    recentUsersRef.once("value", function(recentUsersSnap) {
       recentUsersSnap.forEach(function(recentUserSnap) {
-        if (count >= 5)
-          return true; // stop enumerating.
-
+        if (count >= 5) {
+          return true; // Stop enumerating.
+        }
         var userid = recentUserSnap.name();
         if (userid == self._userid || followerList.indexOf(userid) >= 0) {
-          return; // skip this one.
+          return; // Skip this one.
         }
-
         count++;
         // Now look up their user info and call the onComplete callback.
         self.getUserInfo(userid, function(userInfo) {
@@ -468,6 +476,8 @@ Firefeed.prototype.onNewSpark = function(totalCount, onComplete, onOverflow) {
  * like onNewSpark, except that the sparks returned are always for the
  * specified user.
  *
+ * You do not need to be authenticated to use this function.
+ *
  * @param    {string}    id          The user ID from whom the sparks are
  *                                   fetched. Defaults to 10.
  * @param    {number}    count       The maximum number of sparks to report.
@@ -484,6 +494,31 @@ Firefeed.prototype.onNewSparkFor = function(id, count, onComplete, onOverflow) {
 
   var stream = this._firebase.child("users").child(id).child("sparks");
   stream.limit(count || 10);
+
+  this._onNewSparkForStream(stream, onComplete, onOverflow);
+}
+
+/**
+ * Register a callback to get the latest sparks (default 5). The onComplete and 
+ * onOverflow handlers will be invoked in the same manner as onNewSparkFor.
+ *
+ * You do not need to be authenticated to use this function.
+ *
+ * @param    {number}    count       The maximum number of sparks to report.
+ *
+ * @param    {Function}  onComplete  The callback to call whenever a new spark
+ *                                   is added to the latest set.
+ *
+ * @param    {Function}  onOverflow  The callback that will be called when
+ *                                   a spark needs to be evicted from the
+ *                                   latest set.
+ */
+Firefeed.prototype.onLatestSpark = function(count, onComplete, onOverflow) {
+  this._validateCallback(onComplete, true);
+  this._validateCallback(onOverflow, true);
+
+  var stream = this._firebase.child("recent-sparks");
+  stream.limit(count || 5);
 
   this._onNewSparkForStream(stream, onComplete, onOverflow);
 }

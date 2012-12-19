@@ -50,11 +50,16 @@
       }
     },
     "recent-users": {
-      // Users can add themself to the list of users with recent activity.
+      // Users can add themselves to the list of users with recent activity.
       "$userid": {
         ".write": "$userid == auth.id"
+      }
+    },
+    "recent-sparks": {
+      // Authors of sparks can add their sparks to this list.
+      "$sparkid": {
+        ".write": "root.child('sparks/' + $sparkid + '/author').val() == auth.id"
       }
     }
   }
 }
-

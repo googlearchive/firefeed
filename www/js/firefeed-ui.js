@@ -113,9 +113,11 @@ FirefeedUI.prototype._handleNewSpark = function(limit, func) {
 
 FirefeedUI.prototype._formatDate = function(date) {
   var localeDate = date.toLocaleString();
-  var gmtIndex = localeDate.indexOf(' GMT'); // remove GMT offset if it's there.
-  if (gmtIndex > 0)
+  // Remove GMT offset if it's there.
+  var gmtIndex = localeDate.indexOf(' GMT');
+  if (gmtIndex > 0) {
     localeDate = localeDate.substr(0, gmtIndex);
+  }
   return localeDate;
 };
 
@@ -201,6 +203,11 @@ FirefeedUI.prototype.renderHome = function(e) {
   });
 
   $("#about-link").remove();
+
+  // Attach handler to display the latest 5 sparks.
+  self._handleNewSpark(
+    5, self._firefeed.onLatestSpark.bind(self._firefeed)
+  );
 };
 
 FirefeedUI.prototype.renderTimeline = function(info) {
