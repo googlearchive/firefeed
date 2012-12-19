@@ -179,6 +179,8 @@ FirefeedUI.prototype.renderHome = function() {
       }
     });
   });
+
+  $("#about-link").remove();
 };
 
 FirefeedUI.prototype.editableHandler = function(id, value) {
