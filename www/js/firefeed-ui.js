@@ -96,6 +96,22 @@ FirefeedUI.prototype._postHandler = function(e) {
   });
 };
 
+FirefeedUI.prototype._handleNewSpark = function(limit, func) {
+  func(
+    limit,
+    function(sparkId, spark) {
+      spark.sparkId = sparkId;
+      var sparkEl = $(Mustache.to_html($("#tmpl-spark").html(), spark)).hide();
+      $("#spark-list").prepend(sparkEl);
+      sparkEl.slideDown("slow");
+    }, function(sparkId) {
+      $("#spark-" + sparkId).slideToggle("slow", function() {
+        $(this).remove();
+      });
+    }
+  );
+};
+
 FirefeedUI.prototype.login = function(cb) {
   // Try silent login in case the user is already logged in.
   var self = this;
@@ -193,17 +209,10 @@ FirefeedUI.prototype.renderTimeline = function(info) {
   // Attach post spark button.
   $("#spark-button").click(self._postHandler.bind(self));
 
-  // Attach new spark event handler, capped.
-  self._firefeed.onNewSpark(5, function(sparkId, spark) {
-    spark.sparkId = sparkId;
-    var sparkEl = $(Mustache.to_html($("#tmpl-spark").html(), spark)).hide();
-    $("#spark-list").prepend(sparkEl);
-    sparkEl.slideDown("slow");
-  }, function(sparkId) {
-    $("#spark-" + sparkId).slideToggle("slow", function() {
-      $(this).remove();
-    });
-  });
+  // Attach new spark event handler, capped to 10 for now.
+  self._handleNewSpark(
+    10, self._firefeed.onNewSpark.bind(self._firefeed)
+  );
 
   // Attach suggested user event.
   self._firefeed.onNewSuggestedUser(function(userid, info) {
@@ -224,11 +233,16 @@ FirefeedUI.prototype.renderTimeline = function(info) {
 };
 
 FirefeedUI.prototype.renderProfile = function(uid) {
+  var self = this;
   $("#header").html($("#tmpl-page-header").html());
-  $("#logout-button").click(this.logout.bind(this));
+
+  if (self._loggedIn) {
+    $("#logout-button").click(self.logout.bind(self));
+  } else {
+    $("#logout-button").remove();
+  }
 
   // Render profile page body.
-  var self = this;
   self._firefeed.getUserInfo(uid, function(info) {
     var content = Mustache.to_html($("#tmpl-profile-content").html(), info);
     var body = Mustache.to_html($("#tmpl-content").html(), {
@@ -236,4 +250,9 @@ FirefeedUI.prototype.renderProfile = function(uid) {
     });
     $("#body").html(body);
   });
+
+  // Render this user's tweets. Capped to 5 for now.
+  self._handleNewSpark(
+    5, self._firefeed.onNewSparkFor.bind(self._firefeed, uid)
+  );
 };
