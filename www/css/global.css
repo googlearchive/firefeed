@@ -353,6 +353,7 @@ label.checkbox input{margin-right: 5px;}
   color: #323031;
   padding: 12px 16px;
   width: 100%;
+  margin-top: 3px;
 }
 
 .ie7 .text{width: 95%;}
@@ -375,10 +376,12 @@ label.checkbox input{margin-right: 5px;}
 .editable {
   padding: 3px;
   font-size: 15px;
+  height: 17px;
 }
 
 .editable:hover {
-  border: 1px solid black;
+  border: 1px solid #CCBA8B;
+  border-radius: 3px;
   padding: 2px;
 }
 
