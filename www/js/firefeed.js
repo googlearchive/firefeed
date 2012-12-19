@@ -329,7 +329,7 @@ Firefeed.prototype.post = function(content, onComplete) {
 
       // We also add ourself (with priority) to a list of users with recent activity
       // which we can use elsewhere to see "active" users.
-      var recentUsersRef = self._firebase.child('recent-users').child(self._userid);
+      var recentUsersRef = self._firebase.child("recent-users").child(self._userid);
       recentUsersRef.setWithPriority(true, new Date().getTime());
 
       // Finally, we add the spark ID to the stream of everyone who follows
@@ -375,7 +375,7 @@ Firefeed.prototype.getSuggestedUsers = function(onSuggestedUser) {
 
     // We limit to 20 to try to ensure that there are at least 5 you aren't already 
     // following.
-    var recentUsersQuery = self._firebase.child('recent-users').limit(20);
+    var recentUsersQuery = self._firebase.child("recent-users").limit(20);
     var count = 0;
     self._firebase.child("recent-users").once("value", function(recentUsersSnap) {
       recentUsersSnap.forEach(function(recentUserSnap) {
