@@ -78,11 +78,15 @@
       <script id="tmpl-timeline-content" type="text/html">
         <div class="third">
           <div class="media">
-            <div class="img avatar"><img src="{{pic}}}}" alt="{{name}}" /></div>
+            <div class="img avatar"><img src="{{pic}}" alt="{{name}}"></div>
             <div class="body">
               <h2 class="end">{{name}}</h2>
-              <p class="big-copy end">{{location}}</p>
-              <p class="big-copy">{{bio}}</p>
+              <div class="big-copy end">
+                <div class="editable" id="inputLocation">{{location}}</div>
+              </div>
+              <div class="big-copy">
+                <div class="editable" id="inputBio">{{bio}}</div>
+              </div>
             </div>
           </div>
           <div class="field">
@@ -139,6 +143,7 @@
   
     <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/jqueryui/1.9.2/jquery-ui.min.js"></script>
+    <script src="./libs/jquery.jeditable.mini.js"></script>
     <!--[if (gte IE 6)&(lte IE 8)]>
       <script src="//cdnjs.cloudflare.com/ajax/libs/selectivizr/1.0.2/selectivizr-min.js"></script>
     <![endif]-->

@@ -329,3 +329,8 @@ Firefeed.prototype.onNewSpark = function(onComplete) {
     });
   });
 };
+
+Firefeed.prototype.setProfileField = function(field, value) {
+  var peopleRef = this._firebase.child("people").child(this._userid);
+  peopleRef.child(field).set(value);
+};
