@@ -404,10 +404,6 @@ label.checkbox input{margin-right: 5px;}
   transition: all 0.2s ease;
 }
 
-.btn:hover {
-  border-bottom: inherit;
-}
-
 .ie7 .btn{display: inline;}
 
 .btn.full{
@@ -438,6 +434,9 @@ label.checkbox input{margin-right: 5px;}
   background: -o-linear-gradient(top, #FDC325 30%, #CB9C1D);
   background: -webkit-linear-gradient(top, #FDC325 30%, #CB9C1D);
   background: linear-gradient(top, #FDC325 30%, #CB9C1D);
+  border: 1px solid #AB8319;
+  border-radius: 5px;
+  box-shadow: 0 1px #FED76D inset, 0 1px rgba(0,0,0,0.1);
 }
 
 .btn.default:active{
@@ -446,6 +445,9 @@ label.checkbox input{margin-right: 5px;}
   background: -o-linear-gradient(top, #CB9C1D, #FDC325);
   background: -webkit-linear-gradient(top, #CB9C1D, #FDC325);
   background: linear-gradient(top, #CB9C1D, #FDC325);
+  border: 1px solid #AB8319;
+  border-radius: 5px;
+  box-shadow: 0 1px #FED76D inset, 0 1px rgba(0,0,0,0.1);
 }
 
 .btn.default.small{
@@ -481,6 +483,8 @@ label.checkbox input{margin-right: 5px;}
   background: -o-linear-gradient(top, #FFF 30%, #EEE);
   background: -webkit-linear-gradient(top, #FFF 30%, #EEE);
   background: linear-gradient(top, #FFF 30%, #EEE);
+  border: 1px solid #CCC;
+  border-radius: 5px;
 }
 
 .btn.clean:active{
@@ -489,6 +493,8 @@ label.checkbox input{margin-right: 5px;}
   background: -o-linear-gradient(top, #EEE, #FFF);
   background: -webkit-linear-gradient(top, #EEE, #FFF);
   background: linear-gradient(top, #EEE, #FFF);
+  border: 1px solid #CCC;
+  border-radius: 5px;
 }
 
 .btn-append{
