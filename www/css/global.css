@@ -547,6 +547,14 @@ label.checkbox input{margin-right: 5px;}
   border-bottom: 1px dashed;
 }
 
+h2.subheading a {
+  color: #AB8319;
+}
+
+h2.subheading a:hover {
+  color: #AB8319;
+}
+
 #suggested-users {
   min-height: 200px;
 }
