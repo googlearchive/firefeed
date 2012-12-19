@@ -369,6 +369,22 @@ label.checkbox input{margin-right: 5px;}
   margin-bottom: 15px;
 }
 
+/* Editables
+============================================================ */
+.editable {
+  padding: 3px;
+  font-size: 15px;
+}
+
+.editable:hover {
+  border: 1px solid black;
+  padding: 2px;
+}
+
+.editable input {
+
+}
+
 /* Buttons
 ============================================================ */
 .btn{

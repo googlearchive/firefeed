@@ -181,6 +181,16 @@ FirefeedUI.prototype.renderHome = function() {
   });
 };
 
+FirefeedUI.prototype.editableHandler = function(id, value) {
+  if (id == 'inputLocation') {
+    this._firefeed.setProfileField('location', value);
+  }
+  if (id == 'inputBio') {
+    this._firefeed.setProfileField('bio', value);
+  }
+  return true;
+}
+
 FirefeedUI.prototype.renderTimeline = function(info) {
   $("#header").html($("#tmpl-page-header").html());
   $("#logout-button").click(this.logout.bind(this));
@@ -237,6 +247,12 @@ FirefeedUI.prototype.renderTimeline = function(info) {
         $("#followBox-" + userid).fadeOut(1500);
       });
     });
+  });
+
+  // Make profile fields editable.
+  $('.editable').editable(function(value, settings) {
+    self.editableHandler($(this).attr('id'), value);
+    return value;
   });
 };
 

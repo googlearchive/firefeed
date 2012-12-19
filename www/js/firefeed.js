@@ -377,6 +377,19 @@ Firefeed.prototype.onNewSuggestedUser = function(onComplete) {
   });
 };
 
+
+/**
+ * Set one of our profile fields (e.g. bio, location, etc.)
+ *
+ * @param    {String}  field  The name of the field (e.g. 'bio')
+ * @param    {Any}  value  The new value to write.
+ */
+Firefeed.prototype.setProfileField = function(field, value) {
+  var peopleRef = this._firebase.child("people").child(this._userid);
+  peopleRef.child(field).set(value);
+};
+
+
 /**
  * Register a callback to be notified whenever a new spark appears on the
  * current user's list. This is usually triggered by another user posting a
@@ -426,6 +439,7 @@ Firefeed.prototype.onNewSpark = function(totalCount, onComplete, onOverflow) {
   var stream = this._mainUser.child("stream").limit(totalCount || 100);
   this._onNewSparkForStream(stream, onComplete, onOverflow);
 };
+
 
 /**
  * Register a callback to be notified whenever a given user posts a new spark.
