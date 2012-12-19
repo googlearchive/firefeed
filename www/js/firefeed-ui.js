@@ -336,6 +336,17 @@ FirefeedUI.prototype.renderProfile = function(uid) {
   self._firefeed.getUserInfo(uid, function(info) {
     var content = Mustache.to_html($("#tmpl-profile-content").html(), info);
     $("#profile-content").html(content);
+    // Show follow button if logged in.
+    if (self._loggedIn) {
+      var button = $("#followBtn-" + info.id);
+      button.click(function(e) {
+        e.preventDefault();
+        self._firefeed.follow(info.id, function(err, done) {
+          // TODO FIXME: Check for errors!
+          $("#followBtn-" + info.id).fadeOut(1500);
+        });
+      });
+    }
   });
 
   // Render this user's tweets. Capped to 5 for now.
