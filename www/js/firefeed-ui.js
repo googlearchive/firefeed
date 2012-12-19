@@ -96,7 +96,9 @@ FirefeedUI.prototype._handleNewSpark = function(limit, func) {
     limit,
     function(sparkId, spark) {
       spark.sparkId = sparkId;
-      spark.friendlyTimestamp = FirefeedUI._formatDate(new Date(spark.timestamp || 0));
+      spark.friendlyTimestamp = self._formatDate(
+        new Date(spark.timestamp || 0)
+      );
       var sparkEl = $(Mustache.to_html($("#tmpl-spark").html(), spark)).hide();
       $("#spark-list").prepend(sparkEl);
       sparkEl.slideDown("slow");
@@ -108,7 +110,7 @@ FirefeedUI.prototype._handleNewSpark = function(limit, func) {
   );
 };
 
-FirefeedUI._formatDate = function(date) {
+FirefeedUI.prototype._formatDate = function(date) {
   var localeDate = date.toLocaleString();
   return localeDate.substr(0, localeDate.indexOf(' GMT'));
 };
@@ -145,7 +147,8 @@ FirefeedUI.prototype.logout = function(e) {
 };
 
 FirefeedUI.prototype.render404 == function() {
-
+  // TODO: Add 404 page.
+  this.renderHome();
 };
 
 FirefeedUI.prototype.renderHome = function(e) {
@@ -296,12 +299,17 @@ FirefeedUI.prototype.renderStatus = function(id) {
   $("#top-logo").click(this.renderHome.bind(this));
   $("#logout-button").click(this.logout.bind(this));
 
-  // Render profile page body.
+  // Render spark page body.
   var self = this;
   self._firefeed.getSpark(id, function(info) {
     if (info !== null && info.author) {
       self._firefeed.getUserInfo(info.author, function(authorInfo) {
-        for (var key in authorInfo) info[key] = authorInfo[key];
+        for (var key in authorInfo) {
+          info[key] = authorInfo[key];
+        }
+        info.friendlyTimestamp = self._formatDate(
+          new Date(spark.timestamp || 0)
+        );
         var content = Mustache.to_html($("#tmpl-spark-content").html(), info);
         var body = Mustache.to_html($("#tmpl-content").html(), {
           classes: "cf", content: content
