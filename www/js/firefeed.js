@@ -78,6 +78,7 @@ Firefeed.prototype = {
  * where "err" will be false if the login succeeded, and "info" is set to
  * an object containing the following fields:
  *
+ *    id: User ID
  *    name: A string suitable for greeting the user (usually first name)
  *    pic: URL to a square avatar of the user
  *    location: Location of the user (can be empty)
@@ -161,6 +162,7 @@ Firefeed.prototype.login = function(silent, onComplete) {
         info = val;
       }
       peopleRef.child("presence").set("online");
+      info.id = self._userid;
       onComplete(false, info);
     });
   }
