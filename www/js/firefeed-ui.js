@@ -25,6 +25,7 @@ function FirefeedUI() {
   this._firefeed = new Firefeed("http://firefeed.firebaseio-staging.com/");
 
   // Figure out if the user is logged in or not, with silent login.
+  var self = this;
   self.login(function(info) {
     self._loggedIn = info;
     self._pageController(window.location.href);
