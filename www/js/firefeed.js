@@ -17,12 +17,13 @@ function Firefeed(baseURL, newContext) {
   this._firebase = null;
   this._mainUser = null;
   this._fullName = null;
-  this._newContext = newContext || false;
 
   if (!baseURL || typeof baseURL != "string") {
     throw new Error("Invalid baseURL provided");
   }
-  this._baseURL = baseURL;
+  this._firebase = new Firebase(
+    baseURL, newContext || false ? new Firebase.Context() : null
+  );
 }
 Firefeed.prototype = {
   _validateCallback: function(cb, notInit) {
@@ -84,8 +85,8 @@ Firefeed.prototype = {
  *    location: Location of the user (can be empty)
  *    bio: A brief bio of the user (can be empty)
  * 
- * It is an error to call any other method on this object without a login() or
- * loginAnonymously() call having succeeded.
+ * Some methods on this object may not be called until login() has succeeded,
+ * and are noted as such.
  *
  * The login is performed using Firebase Easy Login, with Facebook as the
  * identity provider. You will probably call login() twice in your app, once
@@ -101,9 +102,6 @@ Firefeed.prototype = {
 Firefeed.prototype.login = function(silent, onComplete) {
   var self = this;
   self._validateCallback(onComplete, true);
-  
-  // Setup the Firebase reference.
-  self.loginAnonymously();
 
   // We store the Firebase token in localStorage, so if one isn't present
   // we'll assume the user hasn't logged in.
@@ -167,17 +165,6 @@ Firefeed.prototype.login = function(silent, onComplete) {
     });
   }
 };
-
-/**
- * Login as an unauthenticated user. This restricts the operations you can do,
- * post, follow, onNewSpark, onNewSuggested user will not work even after this
- * call succeeds. You may use the onSparkFor, getUserInfo and getSpark methods.
- */
-Firefeed.prototype.loginAnonymously = function() {
-  this._firebase = new Firebase(
-    this._baseURL, this._newContext ? new Firebase.Context() : null
-  );
-}
 
 /**
  * Logout the current user. The object may be reused after a logout, but only
