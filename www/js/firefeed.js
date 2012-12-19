@@ -333,7 +333,7 @@ Firefeed.prototype.post = function(content, onComplete) {
       recentUsersRef.setWithPriority(true, new Date().getTime());
 
       // Finally, we add the spark ID to the stream of everyone who follows
-      // the current user. This "fan-out" approach scales well!
+      // the current user.
       self._mainUser.child("followers").once("value", function(followerList) {
         followerList.forEach(function(follower) {
           if (!follower.val()) {
