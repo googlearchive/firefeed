@@ -334,7 +334,7 @@ FirefeedUI.prototype.renderProfile = function(uid) {
 
   // Update user info.
   self._firefeed.getUserInfo(uid, function(info) {
-    var content = Mustache.to_html($("#tmpl-profile-content"), info);
+    var content = Mustache.to_html($("#tmpl-profile-content").html(), info);
     $("#profile-content").html(content);
   });
 
