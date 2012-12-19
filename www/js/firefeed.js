@@ -479,7 +479,7 @@ Firefeed.prototype.onNewSparkFor = function(id, count, onComplete, onOverflow) {
   this._validateCallback(onOverflow, true);
 
   var stream = this._firebase.child("users").child(id).child("sparks");
-  stream.limit(count || 10);
+  stream = stream.limit(count || 10);
 
   this._onNewSparkForStream(stream, onComplete, onOverflow);
 }
@@ -504,7 +504,7 @@ Firefeed.prototype.onLatestSpark = function(count, onComplete, onOverflow) {
   this._validateCallback(onOverflow, true);
 
   var stream = this._firebase.child("recent-sparks");
-  stream.limit(count || 5);
+  stream = stream.limit(count || 5);
 
   this._onNewSparkForStream(stream, onComplete, onOverflow);
 }
