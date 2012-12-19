@@ -154,7 +154,7 @@ Firefeed.prototype.login = function(silent, onComplete) {
         // First time login, upload details.
         info = {
           name: self._name, fullName: self._fullName,
-          location: " ", bio: " ", pic: self._getPicURL()
+          location: "", bio: "", pic: self._getPicURL()
         };
         peopleRef.set(info);
       } else {
