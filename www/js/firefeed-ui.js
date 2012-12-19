@@ -22,7 +22,7 @@ function FirefeedUI() {
   this._limit = 120;
   this._loggedIn = false;
   this._spinner = new Spinner();
-  this._firefeed = new Firefeed("http://firefeed.firebaseio-staging.com/");
+  this._firefeed = new Firefeed("http://firefeed.firebaseio.com/");
 
   // Figure out if the user is logged in or not, with silent login.
   var self = this;

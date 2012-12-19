@@ -126,7 +126,7 @@ Firefeed.prototype.login = function(silent, onComplete) {
   // No token was found, and silent was set to false. We'll attempt to login
   // the user via the Facebook helper.
   var authClient = new FirebaseAuthClient(self._firebase, {
-    endpoint: "https://staging-auth.firebase.com/auth"
+    endpoint: "https://auth.firebase.com/auth"
   });
   authClient.login("facebook", function(err, token, info) {
     if (err) {
