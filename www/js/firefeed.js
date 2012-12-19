@@ -327,6 +327,11 @@ Firefeed.prototype.post = function(content, onComplete) {
       // Then, we add the spark ID to the users own stream.
       self._mainUser.child("stream").child(sparkRefId).set(true);
 
+      // We also add ourself (with priority) to a list of users with recent activity
+      // which we can use elsewhere to see "active" users.
+      var recentUsersRef = self._firebase.child('recent-users').child(self._userid);
+      recentUsersRef.setWithPriority(true, new Date().getTime());
+
       // Finally, we add the spark ID to the stream of everyone who follows
       // the current user. This "fan-out" approach scales well!
       self._mainUser.child("followers").once("value", function(followerList) {
@@ -346,23 +351,21 @@ Firefeed.prototype.post = function(content, onComplete) {
 };
 
 /**
- * Register a callback to be notified when a new "suggested" user to follow
- * is added to the site. Currently, a suggested user is any user that isn't
- * the current user or someone the current user doesn't follow. As the site
+ * Get a set of "suggested" users to follow.  For now this is just a list of 5
+ * users with recent activity, who you aren't already following.  As the site
  * grows, this can be evolved in a number of different ways.
  *
- * The callback is invoked with a two arguments, first the userid, and second
+ * The callback is invoked with two arguments, first the userid, and second
  * an object, containing the same fields as the info object returned by login
  * i.e. (name, pic, location, bio).
  *
  * You need to be authenticated through login() to use this function.
  *
- * @param    {Function}  onComplete  The callback to call whenever a new
- *                                   suggested user appears.
+ * @param    {Function}  onSuggestedUser  The callback to call for each suggested user.
  */
-Firefeed.prototype.onNewSuggestedUser = function(onComplete) {
+Firefeed.prototype.getSuggestedUsers = function(onSuggestedUser) {
   var self = this;
-  self._validateCallback(onComplete);
+  self._validateCallback(onSuggestedUser);
 
   // First, get the current list of users the current user is following,
   // and make sure it is updated as needed.
@@ -370,14 +373,26 @@ Firefeed.prototype.onNewSuggestedUser = function(onComplete) {
   self._mainUser.child("following").once("value", function(followSnap) {
     followerList = Object.keys(followSnap.val() || {});
 
-    // Now, whenever a new user is added to the site, invoke the callback
-    // if we decide that they are a suggested user.
-    self._firebase.child("people").on("child_added", function(peopleSnap) {
-      var userid = peopleSnap.name();
-      if (userid == self._userid || followerList.indexOf(userid) >= 0) {
-        return;
-      }
-      onComplete(userid, peopleSnap.val());
+    // We limit to 20 to try to ensure that there are at least 5 you aren't already 
+    // following.
+    var recentUsersQuery = self._firebase.child('recent-users').limit(20);
+    var count = 0;
+    self._firebase.child("recent-users").once("value", function(recentUsersSnap) {
+      recentUsersSnap.forEach(function(recentUserSnap) {
+        if (count >= 5)
+          return true; // stop enumerating.
+
+        var userid = recentUserSnap.name();
+        if (userid == self._userid || followerList.indexOf(userid) >= 0) {
+          return; // skip this one.
+        }
+
+        count++;
+        // Now look up their user info and call the onComplete callback.
+        self.getUserInfo(userid, function(userInfo) {
+          onSuggestedUser(userid, userInfo);
+        });
+      });
     });
   });
 };

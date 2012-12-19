@@ -48,6 +48,12 @@
           ".validate": "newData.isString()"
         }
       }
+    },
+    "recent-users": {
+      // Users can add themself to the list of users with recent activity.
+      "$userid": {
+        ".write": "$userid == auth.id"
+      }
     }
   }
 }

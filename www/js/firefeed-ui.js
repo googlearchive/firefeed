@@ -242,8 +242,8 @@ FirefeedUI.prototype.renderTimeline = function(info) {
     10, self._firefeed.onNewSpark.bind(self._firefeed)
   );
 
-  // Attach suggested user event.
-  self._firefeed.onNewSuggestedUser(function(userid, info) {
+  // Get some "suggested" users.
+  self._firefeed.getSuggestedUsers(function(userid, info) {
     info.id = userid;
     $(Mustache.to_html($("#tmpl-suggested-user").html(), info)).
       appendTo("#suggested-users");
