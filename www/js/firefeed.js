@@ -17,6 +17,10 @@ function Firefeed(baseURL, newContext) {
   this._firebase = null;
   this._mainUser = null;
   this._fullName = null;
+  
+  // Every time we call firebaseRef.on, we need to remember to call .off,
+  // when requested by the caller via unload(). We'll store our handlers
+  // here so we can clear them later.
   this._handlers = [];
 
   if (!baseURL || typeof baseURL != "string") {
@@ -66,16 +70,21 @@ Firefeed.prototype = {
         ret.pic = self._getPicURL(ret.author);
         onComplete(sparkSnap.name(), ret);
       });
-      self._handlers.push({ref: sparkRef, handler: handler, eventType: 'value'});
+      self._handlers.push({
+        ref: sparkRef, handler: handler, eventType: "value"
+      });
     });
-
-    this._handlers.push({ref: feed, handler: handler, eventType: 'child_added'});
+    self._handlers.push({
+      ref: feed, handler: handler, eventType: "child_added"}
+    });
 
     // Also listen for child_removed so we can call onOverflow appropriately.
     handler = feed.on("child_removed", function(snap) {
       onOverflow(snap.name());
     });
-    this._handlers.push({ref: feed, handler: handler, eventType: 'child_removed'});
+    self._handlers.push({
+      ref: feed, handler: handler, eventType: "child_removed"
+    });
   }
 };
 
@@ -210,7 +219,9 @@ Firefeed.prototype.getUserInfo = function(user, onComplete) {
     val.pic = self._getPicURL(snap.name(), true);
     onComplete(val);
   });
-  self._handlers.push({ref: ref, handler: handler, eventType: 'value'});
+  self._handlers.push({
+    ref: ref, handler: handler, eventType: "value"
+  });
 };
 
 /**
@@ -402,18 +413,16 @@ Firefeed.prototype.getSuggestedUsers = function(onSuggestedUser) {
   });
 };
 
-
 /**
  * Set one of our profile fields (e.g. bio, location, etc.)
  *
- * @param    {String}  field  The name of the field (e.g. 'bio')
- * @param    {Any}  value  The new value to write.
+ * @param    {string}    field       The name of the field (e.g. 'bio').
+ * @param    {Object}    value       The new value to write.
  */
 Firefeed.prototype.setProfileField = function(field, value) {
   var peopleRef = this._firebase.child("people").child(this._userid);
   peopleRef.child(field).set(value);
 };
-
 
 /**
  * Register a callback to be notified whenever a new spark appears on the
@@ -520,8 +529,14 @@ Firefeed.prototype.onLatestSpark = function(count, onComplete, onOverflow) {
   this._onNewSparkForFeed(feed, onComplete, onOverflow);
 };
 
+/**
+ * Unload all event handlers currently registered. You must call this function
+ * when you no longer want to receive updates. This is especially important
+ * for single page apps, when transistioning between views. It is safe to
+ * reuse the Firefeed object after calling this and registering new handlers.
+ */
 Firefeed.prototype.unload = function() {
-  for (var i = 0; i < this._handlers.length; ++i) {
+  for (var i = 0; i < this._handlers.length; i++) {
     var ref = this._handlers[i].ref;
     var handler = this._handlers[i].handler;
     var eventType = this._handlers[i].eventType;

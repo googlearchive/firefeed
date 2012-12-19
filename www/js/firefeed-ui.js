@@ -13,7 +13,8 @@ $(function() {
     var js, id = "facebook-jssdk", ref = d.getElementsByTagName("script")[0];
     if (d.getElementById(id)) {return;}
     js = d.createElement("script"); js.id = id; js.async = true;
-    js.src = "//connect.facebook.net/en_US/all" + (debug ? "/debug" : "") + ".js";
+    js.src = "//connect.facebook.net/en_US/all" +
+             (debug ? "/debug" : "") + ".js";
     ref.parentNode.insertBefore(js, ref);
   }(document, /*debug*/ false));
 });
@@ -25,33 +26,36 @@ function FirefeedUI() {
   this._firefeed = new Firefeed("http://firefeed.firebaseio.com/");
   this._unload = null;
 
-  this.setupHandlers_();
-
-  var self = this;
+  // Setup page navigation.
+  this._setupHandlers();
 
   // Setup History listener.
-  window.History.Adapter.bind(window, 'statechange', function() {
+  var self = this;
+  window.History.Adapter.bind(window, "statechange", function() {
     self._pageController(window.History.getState().hash, false);
   });
 
   // Figure out if the user is logged in or not, with silent login.
   self.login(function(info) {
     self._loggedIn = info;
-
     self._pageController(window.History.getState().hash);
   });
 }
 
-FirefeedUI.prototype.setupHandlers_ = function() {
+FirefeedUI.prototype._setupHandlers = function() {
   var self = this;
-  $(document).on('click', 'a.profile-link', function(e) {
+  $(document).on("click", "a.profile-link", function(e) {
     e.preventDefault();
-    self.goProfile($(this).attr('href'));
+    self.goProfile($(this).attr("href"));
   });
-  $(document).on('click', 'a.spark-link', function(e) {
+  $(document).on("click", "a.spark-link", function(e) {
     e.preventDefault();
-    self.goSpark($(this).attr('href'));
+    self.goSpark($(this).attr("href"));
   });
+};
+
+FirefeedUI.prototype._go = function(url) {
+  window.History.pushState(null, null, url);
 };
 
 FirefeedUI.prototype._pageController = function(url) {
@@ -182,12 +186,8 @@ FirefeedUI.prototype.render404 = function() {
   this.renderHome();
 };
 
-FirefeedUI.prototype.go_ = function(url) {
-  window.History.pushState(null, null, url);
-};
-
 FirefeedUI.prototype.goHome = function() {
-  this.go_("/");
+  this._go("/");
 };
 
 FirefeedUI.prototype.renderHome = function(e) {
@@ -237,7 +237,8 @@ FirefeedUI.prototype.renderHome = function(e) {
 
   // Attach handler to display the latest 5 sparks.
   self._handleNewSpark(
-    'spark-index-list', 5, self._firefeed.onLatestSpark.bind(self._firefeed)
+    "spark-index-list", 5,
+    self._firefeed.onLatestSpark.bind(self._firefeed)
   );
   return function() { self._firefeed.unload(); };
 };
@@ -285,7 +286,8 @@ FirefeedUI.prototype.renderTimeline = function(info) {
 
   // Attach new spark event handler, capped to 10 for now.
   self._handleNewSpark(
-    'spark-timeline-list', 10, self._firefeed.onNewSpark.bind(self._firefeed)
+    "spark-timeline-list", 10,
+    self._firefeed.onNewSpark.bind(self._firefeed)
   );
 
   // Get some "suggested" users.
@@ -314,7 +316,7 @@ FirefeedUI.prototype.renderTimeline = function(info) {
 };
 
 FirefeedUI.prototype.goProfile = function(uid) {
-  this.go_(uid);
+  this._go(uid);
 };
 
 FirefeedUI.prototype.renderProfile = function(uid) {
@@ -328,23 +330,24 @@ FirefeedUI.prototype.renderProfile = function(uid) {
   }
 
   // Render profile page body.
+  $("#body").html(Mustache.to_html($("#tmpl-profile-body").html()));
+
+  // Update user info.
   self._firefeed.getUserInfo(uid, function(info) {
-    var content = Mustache.to_html($("#tmpl-profile-content").html(), info);
-    var body = Mustache.to_html($("#tmpl-content").html(), {
-      classes: "cf", content: content
-    });
-    $("#body").html(body);
+    var content = Mustache.to_html($("#tmpl-profile-content"), info);
+    $("#profile-content").html(content);
   });
 
   // Render this user's tweets. Capped to 5 for now.
   self._handleNewSpark(
-    'spark-profile-list', 5, self._firefeed.onNewSparkFor.bind(self._firefeed, uid)
+    "spark-profile-list", 5,
+    self._firefeed.onNewSparkFor.bind(self._firefeed, uid)
   );
   return function() { self._firefeed.unload(); };
 };
 
 FirefeedUI.prototype.goSpark = function(id) {
-  this.go_(id);
+  this._go(id);
 };
 
 FirefeedUI.prototype.renderSpark = function(id) {
