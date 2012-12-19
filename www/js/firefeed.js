@@ -45,9 +45,10 @@ Firefeed.prototype = {
     var match = RegExp().exec(window.location.search);
     return match && decodeURIComponent(match[1].replace(/\+/g, " "));
   },
-  _getPicURL: function(id) {
+  _getPicURL: function(id, large) {
     return "https://graph.facebook.com/" + (id || self._userid) +
-           "/picture/?type=square&return_ssl_resources=1";
+           "/picture/?type=" + (large ? "large" : "square") +
+           "&return_ssl_resources=1";
   },
   _onNewSparkForStream: function(stream, onComplete, onOverflow) {
     var self = this;
@@ -200,7 +201,8 @@ Firefeed.prototype.logout = function() {
  * Get information on a particular user, given a user ID. You do not need
  * to be authenticated to make this call. The onComplete callback will be
  * provided an object as a single argument, containing the same fields as the
- * object returned by login().
+ * object returned by login(), except that "pic" will point to the URL of a
+ * larger image.
  *
  * onComplete may be called multiple time if user information changes. Make
  * sure to update your DOM accordingly.
@@ -212,7 +214,9 @@ Firefeed.prototype.getUserInfo = function(user, onComplete) {
   var self = this;
   self._validateCallback(onComplete, true);
   self._firebase.child("people").child(user).on("value", function(snap) {
-    onComplete(snap.val());
+    var val = snap.val();
+    val.pic = self._getPicURL(snap.name(), true);
+    onComplete(val);
   });
 };
 
