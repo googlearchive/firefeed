@@ -45,28 +45,26 @@ FirefeedUI.prototype._pageController = function(url) {
   // Extract sub page from URL, if any.
   var idx = url.indexOf("?");
   var hash = (idx > 0) ? url.slice(idx + 1) : "";
+  var value = hash.split("=");
 
-  console.log("Handling " + url + " -> " + hash);
-  switch (hash) {
+  console.log("Handling " + url + " -> " + value[0] + " = " + value[1]);
+  switch (value[0]) {
     case "profile":
-      // Extract user ID.
-      idx = hash.indexOf("=");
-      var uid = (idx > 0) ? hash.slice(idx + 1) : "";
-      if (uid == "" && !this._loggedIn) {
+      if (!value[1]) {
         this.render404({}, "", "/?404");
       } else {
-        this.renderProfile(uid);
-        History.pushState({}, "", "?profile=" + uid);
+        this.renderProfile(value[1]);
+        //History.pushState({}, "", "?profile=" + uid);
       }
       break;
     case "timeline":
     default:
       if (this._loggedIn) {
         this.renderTimeline(this._loggedIn);
-        History.pushState({}, "", "/?timeline");
+        //History.pushState({}, "", "/?timeline");
       } else {
         this.renderHome();
-        History.pushState({}, "", "/");
+        //History.pushState({}, "", "/");
       }
       break;
   }
