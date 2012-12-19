@@ -145,6 +145,11 @@ FirefeedUI.prototype.renderHome = function(e) {
   if (e) {
     e.preventDefault();
   }
+  if (this._loggedIn) {
+    this.renderTimeline(this._loggedIn);
+    return;
+  }
+
   $("#header").html($("#tmpl-index-header").html());
 
   // Preload animation.
