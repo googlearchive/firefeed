@@ -105,10 +105,12 @@ FirefeedUI.prototype._postHandler = function(e) {
 };
 
 FirefeedUI.prototype._handleNewSpark = function(limit, func) {
+  var self = this;
   func(
     limit,
     function(sparkId, spark) {
       spark.sparkId = sparkId;
+      spark.friendlyTimestamp = FirefeedUI._formatDate(new Date(spark.timestamp || 0));
       var sparkEl = $(Mustache.to_html($("#tmpl-spark").html(), spark)).hide();
       $("#spark-list").prepend(sparkEl);
       sparkEl.slideDown("slow");
@@ -118,6 +120,11 @@ FirefeedUI.prototype._handleNewSpark = function(limit, func) {
       });
     }
   );
+};
+
+FirefeedUI._formatDate = function(date) {
+  var localeDate = date.toLocaleString();
+  return localeDate.substr(0, localeDate.indexOf(' GMT'));
 };
 
 FirefeedUI.prototype.login = function(cb) {

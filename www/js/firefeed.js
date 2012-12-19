@@ -301,7 +301,10 @@ Firefeed.prototype.post = function(content, onComplete) {
   var sparkRefId = sparkRef.name();
 
   var spark = {
-    author: self._userid, by: self._fullName, content: content
+    author: self._userid, 
+    by: self._fullName, 
+    content: content,
+    timestamp: new Date().getTime()
   };
 
   sparkRef.set(spark, function(done) {
