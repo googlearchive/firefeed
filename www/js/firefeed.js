@@ -75,7 +75,7 @@ Firefeed.prototype = {
       });
     });
     self._handlers.push({
-      ref: feed, handler: handler, eventType: "child_added"}
+      ref: feed, handler: handler, eventType: "child_added"
     });
 
     // Also listen for child_removed so we can call onOverflow appropriately.
