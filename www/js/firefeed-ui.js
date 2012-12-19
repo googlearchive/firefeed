@@ -82,6 +82,7 @@ FirefeedUI.prototype._postHandler = function(e) {
       message.html("Posting failed!").css("background", "#FF6347");
     }
     self._spinner.stop();
+    $("#c-count").val(self._limit);
     message.css("visibility", "visible");
     message.fadeOut(1500, function() {
       message.replaceWith(sparkButton);
