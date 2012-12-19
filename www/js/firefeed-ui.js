@@ -91,7 +91,7 @@ FirefeedUI.prototype._postHandler = function(e) {
   });
 };
 
-FirefeedUI.prototype._handleNewSpark = function(limit, func) {
+FirefeedUI.prototype._handleNewSpark = function(listId, limit, func) {
   var self = this;
   func(
     limit,
@@ -101,7 +101,7 @@ FirefeedUI.prototype._handleNewSpark = function(limit, func) {
         new Date(spark.timestamp || 0)
       );
       var sparkEl = $(Mustache.to_html($("#tmpl-spark").html(), spark)).hide();
-      $("#spark-list").prepend(sparkEl);
+      $("#" + listId).prepend(sparkEl);
       sparkEl.slideDown("slow");
     }, function(sparkId) {
       $("#spark-" + sparkId).slideToggle("slow", function() {
@@ -206,7 +206,7 @@ FirefeedUI.prototype.renderHome = function(e) {
 
   // Attach handler to display the latest 5 sparks.
   self._handleNewSpark(
-    5, self._firefeed.onLatestSpark.bind(self._firefeed)
+    'spark-index-list', 5, self._firefeed.onLatestSpark.bind(self._firefeed)
   );
 };
 
@@ -253,7 +253,7 @@ FirefeedUI.prototype.renderTimeline = function(info) {
 
   // Attach new spark event handler, capped to 10 for now.
   self._handleNewSpark(
-    10, self._firefeed.onNewSpark.bind(self._firefeed)
+    'spark-timeline-list', 10, self._firefeed.onNewSpark.bind(self._firefeed)
   );
 
   // Get some "suggested" users.
@@ -301,7 +301,7 @@ FirefeedUI.prototype.renderProfile = function(uid) {
 
   // Render this user's tweets. Capped to 5 for now.
   self._handleNewSpark(
-    5, self._firefeed.onNewSparkFor.bind(self._firefeed, uid)
+    'spark-profile-list', 5, self._firefeed.onNewSparkFor.bind(self._firefeed, uid)
   );
 };
 

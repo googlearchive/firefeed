@@ -181,7 +181,6 @@ Firefeed.prototype.logout = function() {
 
   this._userid = null;
   this._mainUser = null;
-  this._firebase = null;
   this._fullName = null;
   this._name = null;
 };
