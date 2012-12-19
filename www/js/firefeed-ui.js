@@ -133,9 +133,11 @@ FirefeedUI.prototype._handleNewSpark = function(listId, limit, func) {
       $("#" + listId).prepend(sparkEl);
       sparkEl.slideDown("slow");
     }, function(sparkId) {
-      $("#spark-" + sparkId).slideToggle("slow", function() {
-        $(this).remove();
-      });
+      setTimeout(function() {
+        $("#spark-" + sparkId).stop().slideToggle("slow", function() {
+          $(this).remove();
+        });
+      }, 100);
     }
   );
 };
