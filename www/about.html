@@ -66,7 +66,7 @@
               </p>
               <p>
                 Firefeed is made possible by <a target="_blank" href="http://firebase.com">Firebase</a>,
-                a scalable real-time backend with a simple JS API.  All Firefeed messages are stored there, and the API is used to update every user's stream with the latest messages in realtime. Firebase also has a rules language, that allows the developer to enforce certain security requirements.
+                a scalable real-time backend with a simple JS API.  All Firefeed messages are stored there, and the API is used to update every user's feed with the latest messages in realtime. Firebase also has a rules language, that allows the developer to enforce certain security requirements.
               </p>
               <p><span class="italic">Sound interesting?</span> Let's delve into the details. We'll assume you know a little
                 about Firebase and how data is stored in it. Be sure to read through
@@ -278,7 +278,7 @@
             <h3>Application Logic</h3>
 
             <p>Let's come back to why we decided on this data structure:
-A users stream and a user’s sparks will just be a list of spark IDs. The actual spark data will be stored in a global spark list. When a new spark is posted, we’ll it in the global list, and then put its ID in the feed of every user that is following the author.</p> 
+A users feed and a user’s sparks will just be a list of spark IDs. The actual spark data will be stored in a global spark list. When a new spark is posted, we’ll it in the global list, and then put its ID in the feed of every user that is following the author.</p> 
 
 <pre class="prettyprint lang_js">
 

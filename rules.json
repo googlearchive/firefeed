@@ -25,9 +25,9 @@
             ".write": "$followerid == auth.id"
           }
         },
-        "stream": {
+        "feed": {
           "$sparkid": {
-            // User A can write in user B's stream, but only if A is following B, and only for sparks for which they are the author.
+            // User A can write in user B's feed, but only if A is following B, and only for sparks for which they are the author.
             ".write": "root.child('users/' + $userid + '/following').hasChild(auth.id) && root.child('sparks/' + $sparkid + '/author').val() == auth.id"
           }
         }
