@@ -57,6 +57,14 @@ FirefeedUI.prototype._pageController = function(url) {
         //History.pushState({}, "", "?profile=" + uid);
       }
       break;
+    case "status":
+      if (!value[1]) {
+        this.render404({}, "", "/?404");
+      } else {
+        this.renderStatus(value[1]);
+        //History.pushState({}, "", "?status=" + id);
+      }
+      break;
     case "timeline":
     default:
       if (this._loggedIn) {
@@ -255,4 +263,24 @@ FirefeedUI.prototype.renderProfile = function(uid) {
   self._handleNewSpark(
     5, self._firefeed.onNewSparkFor.bind(self._firefeed, uid)
   );
+};
+
+FirefeedUI.prototype.renderStatus = function(id) {
+  $("#header").html($("#tmpl-page-header").html());
+  $("#logout-button").click(this.logout.bind(this));
+
+  // Render profile page body.
+  var self = this;
+  self._firefeed.getSpark(id, function(info) {
+    if (info !== null && info.author) {
+      self._firefeed.getUserInfo(info.author, function(authorInfo) {
+        for (var key in authorInfo) info[key] = authorInfo[key];
+        var content = Mustache.to_html($("#tmpl-spark-content").html(), info);
+        var body = Mustache.to_html($("#tmpl-content").html(), {
+          classes: "cf", content: content
+        });
+        $("#body").html(body);
+      });
+    }
+  });
 };
