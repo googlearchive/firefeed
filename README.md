@@ -5,6 +5,8 @@ Firefeed is a web app that lets users post small messages called *sparks* to
 their stream. You can follow other users, and their sparks will appear on your
 stream.
 
+### [Live Demo](http://firefeed.io)
+
 The unique property of this application is that it is built entirely using
 client side logic - no server neccessary - other than to serve the static
 HTML/CSS/JS files, of course.
