@@ -52,7 +52,8 @@
                   Any place that can host static content, for example
                   <a target="_blank" href="http://pages.github.com">Github Pages</a> or
                   <a target="_blank" href="http://site44.com/">Site44</a>, will be able to run this app
-                  by simply serving the requisite HTML, CSS and JS files.</li>
+                  by simply serving the requisite HTML, CSS and JS files. You can easily serve it
+                  from a CDN, since there's no dynamic content or caching to worry about!</li>
 
                   <li><span class="italic">The core logic is less than 500 lines of code</span>.<br/><br/>
                   Excluding the user interface, all the application logic is in two files:
@@ -73,20 +74,20 @@
               </p>
               <p>Sound interesting? Let's delve into the details. We'll assume you know a little
                 about Firebase and how data is stored in it. Be sure to read through
-                the basic documentation for Firebase if you haven't already, or take the
-                quick 5-minute tutorial!
+                the <a target="_blank" href="https://www.firebase.com/docs/">basic documentation</a> for Firebase
+                if you haven't already, or take the quick <a target="_blank" href="http://www.firebase.com/tutorial/">5-minute tutorial</a>!
               </p>
               <hr/>
               <h3>Authentication</h3>
               <p>The very first step the user must perform in order to post a message
               on the site is to login in order to prove who they are. We use Facebook
-              authenticate the user, which looks something like this:
+              to authenticate the user, which looks something like this:
                 <img src="img/auth.png"/>
               </p>
               <p>In essence, we exchange a Facebook auth token for one from Firebase.
                 This works because when we
-                <a href="https://www.firebase.com/docs/security/simple-login-facebook.html">configured</a>
-                our Firebase namespace, we entered our Facebook Application ID and
+                <a target="_blank" href="https://www.firebase.com/docs/security/simple-login-facebook.html">configured</a>
+                our Firebase namespace, we entered our Facebook application ID and
                 secret. Thus, Firebase can be assured that the token could only have
                 been produced by Firefeed, the app that the user agreed to log into.</p>
               <p>Firebase can take care of this whole process for us, so we'll
@@ -181,8 +182,8 @@
               bucket. Let's have every user bucket contain three properties:
               a list of sparks posted by them, a list of users they follow, and
               a list of users who follow them. If you're wondering why we
-              chose this particular structure, hold your thought, we'll come back to
-              that in a second!
+              chose this particular structure, hold that thought, we'll come back to
+              it in a minute!
             </p>
             <pre class="prettyprint lang_js">
 
@@ -201,13 +202,14 @@
               the currently logged in user, and they'll be able to write to
               their data bucket. But wait, wasn't the top-level write rule
               set to false? Yes, but Firebase will allow a write even if any
-              one of the write rules in the hierarchy evaluated to true. Nifty!
+              one of the write rules in the path from a node to the root of the
+              tree evaluates to true. Nifty!
             </p>
             <p>
               We're not quite done yet, because other users, even those that
               the current user follows, won't be able to write the stream.
               We want to allow anyone who the user is following to be able
-              to write to their stream:
+              to write to the stream:
             </p>
             <pre class="prettyprint lang_js">
 
@@ -220,9 +222,9 @@
         }
       }
     }</pre><br/>
-            <p>Whoah! That write rule is a bit long, but let's break it down. It
-              consists of two expressions that must both evaluate to true for the
-              write to be allowed. It also makes use of the special <code>root</code>
+            <p>Let's break those rules down. It consists of two expressions that
+              must both evaluate to true for the write to be allowed. It also
+              makes use of the special <code>root</code>
               variable which points to the top-level key.
             </p>
             <p>The first rule checks if the user trying to
@@ -251,7 +253,7 @@
             <p>We're almost there! We'll need to define the rules for the global
               sparks list. We need to ensure is that every spark is formatted a
               certain way, that sparks cannot be modified once posted, and that
-              only the author of a spark is able to add it:
+              only the author of a spark is able to add it to the global list:
             </p>
             <pre class="prettyprint lang_js">
 
@@ -273,8 +275,9 @@
             to the object currently present at that location, and <code>newData</code>
             refers to the data that will be written if the rule succeeds.</p>
             <p>Phew - we're done with the rules! The hardest part is behind us
-              now, and it resulted in a small 60 line JSON file. Now Firebase
-              will ensure that no data will be written where it wasn't meant to.</p>
+              now, when it's all put together, it makes a small 60 line
+              <a target="_blank" href="http://github.com/firebase/firefeed/blob/master/rules.json">JSON file</a>.
+              Now Firebase will ensure that no data will be written where it wasn't meant to.</p>
 
             <hr/>
             <h3>Application Logic</h3>
@@ -310,9 +313,10 @@
     </pre><br/>
 
             <p>Why do it this way? We're trading off a little bit of extra
-              space for performance and scalability. This approach will
-              scale well because now every user only has to
-              watch their own stream to see all incoming messages:
+              space for performance and scalability. Because we store a
+              reference to sparks in everyone's stream, we don't have to
+              look anywhere other than a single node to aggregate all incoming
+              messages for a single user:
             </p>
 <pre class="prettyprint lang_js">
 
@@ -323,19 +327,25 @@
     sparkRef.on("value", function(spark) {
       // Render the spark into the user's feed.
     });
-  });</pre>
-
+  });</pre><br/>
+          <p>
+            With Firebase <a target="_blank" href="http://www.firebase.com/docs/queries.html">queries and limits</a>,
+            we can also limit the output to the latest
+            100 sparks so we don't fetch any more data than is needed.
+            Structuring our data in this manner is more efficient than having to
+            setup listeners for every user that the current user is following.
+          </p>
           <hr/>
           <h3>We did it!</h3>
           <p>
-            And that's the story of how you can build a twitter clone in
-            under 500 lines of code.
+            That was the story of how you can build a twitter clone in
+            under 500 lines of well commented code with copious whitespace.
           </p>
           <p>We're pretty excited about this novel
             approach to securing client side apps. When combined with Firebase's
             realtime data updates, the doors have been opened to a wide
-            range of innovate applications. We can't wait to see what you'll come
-            up with, and we're here to help!
+            range of innovative applications. We can't wait to see what you'll come
+            up with, and we're <a target="_blank" href="https://www.firebase.com/docs/contact.html">here to help</a>!
           </p>
           <hr/>
             </div>
