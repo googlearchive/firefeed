@@ -337,7 +337,7 @@ FirefeedUI.prototype.renderProfile = function(uid) {
     var content = Mustache.to_html($("#tmpl-profile-content").html(), info);
     $("#profile-content").html(content);
     // Show follow button if logged in.
-    if (self._loggedIn) {
+    if (self._loggedIn && self._loggedIn != info.id) {
       var button = $("#followBtn-" + info.id);
       button.click(function(e) {
         e.preventDefault();
