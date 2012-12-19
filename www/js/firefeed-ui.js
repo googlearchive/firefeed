@@ -24,16 +24,6 @@ function FirefeedUI() {
   this._spinner = new Spinner();
   this._firefeed = new Firefeed("http://firefeed.firebaseio-staging.com/");
 
-  // Setup history callbacks.
-  var self = this;
-  History.Adapter.bind(window, "statechange", function() {
-    var state = History.getState();
-    if (state.data && state.data.info) {
-      self._loggedIn = state.data.info;
-    }
-    self._pageController(state.url);
-  });
-
   // Figure out if the user is logged in or not, with silent login.
   self.login(function(info) {
     self._loggedIn = info;
@@ -54,7 +44,6 @@ FirefeedUI.prototype._pageController = function(url) {
         this.render404({}, "", "/?404");
       } else {
         this.renderProfile(value[1]);
-        //History.pushState({}, "", "?profile=" + uid);
       }
       break;
     case "status":
@@ -62,17 +51,14 @@ FirefeedUI.prototype._pageController = function(url) {
         this.render404({}, "", "/?404");
       } else {
         this.renderStatus(value[1]);
-        //History.pushState({}, "", "?status=" + id);
       }
       break;
     case "timeline":
     default:
       if (this._loggedIn) {
         this.renderTimeline(this._loggedIn);
-        //History.pushState({}, "", "/?timeline");
       } else {
         this.renderHome();
-        //History.pushState({}, "", "/");
       }
       break;
   }
@@ -120,6 +106,16 @@ FirefeedUI.prototype._handleNewSpark = function(limit, func) {
   );
 };
 
+FirefeedUI.prototype._editableHandler = function(id, value) {
+  if (id == "inputLocation") {
+    this._firefeed.setProfileField("location", value);
+  }
+  if (id == "inputBio") {
+    this._firefeed.setProfileField("bio", value);
+  }
+  return true;
+}
+
 FirefeedUI.prototype.login = function(cb) {
   // Try silent login in case the user is already logged in.
   var self = this;
@@ -133,17 +129,21 @@ FirefeedUI.prototype.login = function(cb) {
 };
 
 FirefeedUI.prototype.logout = function(e) {
+  if (e) {
+    e.preventDefault();
+  }
   this._firefeed.logout();
   this._loggedIn = false;
-  History.pushState({}, "", "/");
-  e.preventDefault();
 };
 
 FirefeedUI.prototype.render404 == function() {
 
 };
 
-FirefeedUI.prototype.renderHome = function() {
+FirefeedUI.prototype.renderHome = function(e) {
+  if (e) {
+    e.preventDefault();
+  }
   $("#header").html($("#tmpl-index-header").html());
 
   // Preload animation.
@@ -175,7 +175,7 @@ FirefeedUI.prototype.renderHome = function() {
         loginButton.css("visibility", "visible");
         console.log(err);
       } else {
-        History.pushState({info: info}, "", "/?timeline");
+        self.renderTimeline(info);
       }
     });
   });
@@ -183,18 +183,9 @@ FirefeedUI.prototype.renderHome = function() {
   $("#about-link").remove();
 };
 
-FirefeedUI.prototype.editableHandler = function(id, value) {
-  if (id == 'inputLocation') {
-    this._firefeed.setProfileField('location', value);
-  }
-  if (id == 'inputBio') {
-    this._firefeed.setProfileField('bio', value);
-  }
-  return true;
-}
-
 FirefeedUI.prototype.renderTimeline = function(info) {
   $("#header").html($("#tmpl-page-header").html());
+  $("#top-logo").click(this.renderHome.bind(this));
   $("#logout-button").click(this.logout.bind(this));
 
   // Render placeholders for location / bio if not filled in.
@@ -256,8 +247,8 @@ FirefeedUI.prototype.renderTimeline = function(info) {
   });
 
   // Make profile fields editable.
-  $('.editable').editable(function(value, settings) {
-    self.editableHandler($(this).attr('id'), value);
+  $(".editable").editable(function(value, settings) {
+    self._editableHandler($(this).attr("id"), value);
     return value;
   });
 };
@@ -265,7 +256,7 @@ FirefeedUI.prototype.renderTimeline = function(info) {
 FirefeedUI.prototype.renderProfile = function(uid) {
   var self = this;
   $("#header").html($("#tmpl-page-header").html());
-
+  $("#top-logo").click(this.renderHome.bind(this));
   if (self._loggedIn) {
     $("#logout-button").click(self.logout.bind(self));
   } else {
@@ -289,6 +280,7 @@ FirefeedUI.prototype.renderProfile = function(uid) {
 
 FirefeedUI.prototype.renderStatus = function(id) {
   $("#header").html($("#tmpl-page-header").html());
+  $("#top-logo").click(this.renderHome.bind(this));
   $("#logout-button").click(this.logout.bind(this));
 
   // Render profile page body.
