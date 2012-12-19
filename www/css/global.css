@@ -544,6 +544,61 @@ label.checkbox input{margin-right: 5px;}
   height: 50px;
 }
 
+.about{
+  font-family: 'Proxima Nova', Arial, Helvetica, sans-serif !important;
+}
+
+.about a{
+  color: #AB8319;
+}
+
+.about a:hover{
+  text-decoration: none;
+  border-bottom: none;
+}
+
+.about h2{
+  font-family: 'Proxima Nova Bold', Arial, Helvetica, sans-serif !important;
+}
+
+.about h3{
+  color: #323031;
+  font-size: 24px;
+  font-family: 'Proxima Nova Bold', Arial, Helvetica, sans-serif !important;
+}
+
+.about img {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+  padding-top: 30px;
+}
+pre.prettyprint {
+  font-size: 16px;
+  padding-bottom: 20px;
+  font-family: monospace, monospace !important;
+}
+
+span.italic {
+  font-family: 'Proxima Nova Italic', Arial, Helvetica, sans-serif !important;
+}
+
+.about ul{
+  list-style-image: url(../img/favicon.png);
+  padding-left: 50px;
+  padding-right: 100px;
+}
+
+.about li{
+  padding-bottom: 30px;
+}
+
+.about p{
+  margin: 0px;
+  padding-bottom: 20px;
+}
+
 .msg{
   border: 1px solid #AB8319;
   border-radius: 5px;
