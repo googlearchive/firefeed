@@ -1,8 +1,8 @@
 Firefeed
 ========
 Firefeed is a web app that lets users post small messages called *sparks* to
-their stream. You can follow other users, and their sparks will appear on your
-stream.
+their feed. You can follow other users, and their sparks will appear on your
+feed.
 
 ### [Live Demo](http://firefeed.io)
 
@@ -20,7 +20,7 @@ UI in www/index.html via www/js/firefeed-ui.js.
 [firefeed.js](http://github.com/firebase/firefeed/blob/master/firefeed.js) consists of 11
 public methods, all of which are documented with jsdoc.
 
-If you'd like to embed a stream like Firefeed into your app, we recommend
+If you'd like to embed a feed like Firefeed into your app, we recommend
 importing firefeed.js and hooking it up to your own UI. Take a look at
 firefeed-ui for an example of how this is done!
 
