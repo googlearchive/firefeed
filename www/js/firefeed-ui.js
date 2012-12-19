@@ -44,18 +44,27 @@ function FirefeedUI() {
 FirefeedUI.prototype._pageController = function(url) {
   // Extract sub page from URL, if any.
   var idx = url.indexOf("?");
-  var hash = (idx > 0) ? window.location.href.slice(idx + 1) : "";
+  var hash = (idx > 0) ? url.slice(idx + 1) : "";
+  var value = hash.split("=");
 
-  console.log("Handling " + url + " -> " + hash);
-  switch (hash) {
+  console.log("Handling " + url + " -> " + value[0] + " = " + value[1]);
+  switch (value[0]) {
+    case "profile":
+      if (!value[1]) {
+        this.render404({}, "", "/?404");
+      } else {
+        this.renderProfile(value[1]);
+        //History.pushState({}, "", "?profile=" + uid);
+      }
+      break;
     case "timeline":
     default:
       if (this._loggedIn) {
         this.renderTimeline(this._loggedIn);
-        History.pushState({}, "", "/?timeline");
+        //History.pushState({}, "", "/?timeline");
       } else {
         this.renderHome();
-        History.pushState({}, "", "/");
+        //History.pushState({}, "", "/");
       }
       break;
   }
@@ -87,6 +96,22 @@ FirefeedUI.prototype._postHandler = function(e) {
   });
 };
 
+FirefeedUI.prototype._handleNewSpark = function(limit, func) {
+  func(
+    limit,
+    function(sparkId, spark) {
+      spark.sparkId = sparkId;
+      var sparkEl = $(Mustache.to_html($("#tmpl-spark").html(), spark)).hide();
+      $("#spark-list").prepend(sparkEl);
+      sparkEl.slideDown("slow");
+    }, function(sparkId) {
+      $("#spark-" + sparkId).slideToggle("slow", function() {
+        $(this).remove();
+      });
+    }
+  );
+};
+
 FirefeedUI.prototype.login = function(cb) {
   // Try silent login in case the user is already logged in.
   var self = this;
@@ -104,6 +129,10 @@ FirefeedUI.prototype.logout = function(e) {
   this._loggedIn = false;
   History.pushState({}, "", "/");
   e.preventDefault();
+};
+
+FirefeedUI.prototype.render404 == function() {
+
 };
 
 FirefeedUI.prototype.renderHome = function() {
@@ -190,11 +219,26 @@ FirefeedUI.prototype.renderTimeline = function(info) {
   // Attach post spark button.
   $("#spark-button").click(self._postHandler.bind(self));
 
+  // Attach new spark event handler, capped to 10 for now.
+  self._handleNewSpark(
+    10, self._firefeed.onNewSpark.bind(self._firefeed)
+  );
+
   // Attach suggested user event.
   self._firefeed.onNewSuggestedUser(function(userid, info) {
     info.id = userid;
     $(Mustache.to_html($("#tmpl-suggested-user").html(), info)).
       appendTo("#suggested-users");
+    var button = $("#followBtn-" + userid);
+    // Fade out the suggested user if they were followed successfully.
+    button.click(function(e) {
+      e.preventDefault();
+      button.remove();
+      self._firefeed.follow(userid, function(err, done) {
+        // TODO FIXME: Check for errors!
+        $("#followBox-" + userid).fadeOut(1500);
+      });
+    });
   });
 
   // Make profile fields editable.
@@ -202,4 +246,29 @@ FirefeedUI.prototype.renderTimeline = function(info) {
     self.editableHandler($(this).attr('id'), value);
     return value;
   });
+};
+
+FirefeedUI.prototype.renderProfile = function(uid) {
+  var self = this;
+  $("#header").html($("#tmpl-page-header").html());
+
+  if (self._loggedIn) {
+    $("#logout-button").click(self.logout.bind(self));
+  } else {
+    $("#logout-button").remove();
+  }
+
+  // Render profile page body.
+  self._firefeed.getUserInfo(uid, function(info) {
+    var content = Mustache.to_html($("#tmpl-profile-content").html(), info);
+    var body = Mustache.to_html($("#tmpl-content").html(), {
+      classes: "cf", content: content
+    });
+    $("#body").html(body);
+  });
+
+  // Render this user's tweets. Capped to 5 for now.
+  self._handleNewSpark(
+    5, self._firefeed.onNewSparkFor.bind(self._firefeed, uid)
+  );
 };
