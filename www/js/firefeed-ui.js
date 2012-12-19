@@ -112,7 +112,10 @@ FirefeedUI.prototype._handleNewSpark = function(limit, func) {
 
 FirefeedUI.prototype._formatDate = function(date) {
   var localeDate = date.toLocaleString();
-  return localeDate.substr(0, localeDate.indexOf(' GMT'));
+  var gmtIndex = localeDate.indexOf(' GMT'); // remove GMT offset if it's there.
+  if (gmtIndex > 0)
+    localeDate = localeDate.substr(0, gmtIndex);
+  return localeDate;
 };
 
 FirefeedUI.prototype._editableHandler = function(id, value) {
