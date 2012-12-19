@@ -11,8 +11,8 @@ The unique property of this application is that it is built entirely using
 client side logic - no server neccessary - other than to serve the static
 HTML/CSS/JS files, of course.
 
-This is made possible by Firebase. A detailed explanation of how the app
-was built is [available here](http://firefeed.io/about.html).
+This is made possible by [Firebase](http://firebase.com/). A detailed explanation
+of how the app was built is [available here](http://firefeed.io/about.html).
 
 Layout
 ------
@@ -20,8 +20,15 @@ Layout
 The core application logic is in www/js/firefeed.js. It is hooked up to the
 UI in www/index.html via www/js/firefeed-ui.js.
 
-If you'd like to embed a stream like Firefeed into your app, we recommend
-import firefeed.js and hooking it up to your own UI.
+If you'd like to embed a stream like Firefeed into your app, we recommend you
+import firefeed.js and hooking it up to your own UI. Take a look at
+firefeed-ui for an example of how this is done!
+
+Help
+----
+
+Please feel free to [reach out to us](https://groups.google.com/group/firebase-talk)
+if you have questions, comments or suggestions!
 
 License
 -------
