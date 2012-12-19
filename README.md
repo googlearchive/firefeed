@@ -29,10 +29,15 @@ Exercises for the reader
 1. Implement unfollowing a user.
 2. Implement protected accounts. If a user opts into a protected account, their
 sparks can only be viewed by people they approve.
-3. Implement search based on #hashtags. Hint: Instead of searching for the
+3. Implement search based on #hashtags. (Hint: Instead of searching for the
 actual value through the global list of sparks, consider creating a new bucket
 for every hashtag when it is first used, and then populating it with spark
-references.
+references).
+4. Implement retweets, favorites and @ messages to other users. (Hint: You can sort
+the @ messages at creation time for ease of rendering on the consumer side).
+5. Implement direct messages. (Hint: Use a mailbox style system between users, and
+setup your rules such that you can write to another user's mailbox but not read
+from it).
 
 Help
 ----
