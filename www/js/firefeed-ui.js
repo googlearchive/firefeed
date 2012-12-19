@@ -23,14 +23,36 @@ function FirefeedUI() {
   this._loggedIn = false;
   this._spinner = new Spinner();
   this._firefeed = new Firefeed("http://firefeed.firebaseio.com/");
+  this._unload = null;
+
+  this.setupHandlers_();
+
+  var self = this;
+
+  // Setup History listener.
+  window.History.Adapter.bind(window, 'statechange', function() {
+    self._pageController(window.History.getState().hash, false);
+  });
 
   // Figure out if the user is logged in or not, with silent login.
-  var self = this;
   self.login(function(info) {
     self._loggedIn = info;
-    self._pageController(window.location.href);
+
+    self._pageController(window.History.getState().hash);
   });
 }
+
+FirefeedUI.prototype.setupHandlers_ = function() {
+  var self = this;
+  $(document).on('click', 'a.profile-link', function(e) {
+    e.preventDefault();
+    self.goProfile($(this).attr('href'));
+  });
+  $(document).on('click', 'a.spark-link', function(e) {
+    e.preventDefault();
+    self.goSpark($(this).attr('href'));
+  });
+};
 
 FirefeedUI.prototype._pageController = function(url) {
   // Extract sub page from URL, if any.
@@ -38,27 +60,29 @@ FirefeedUI.prototype._pageController = function(url) {
   var hash = (idx > 0) ? url.slice(idx + 1) : "";
   var value = hash.split("=");
 
+  this._unload && this._unload();
+
   switch (value[0]) {
     case "profile":
       if (!value[1]) {
-        this.render404({}, "", "/?404");
+        this._unload = this.render404();
       } else {
-        this.renderProfile(value[1]);
+        this._unload = this.renderProfile(value[1]);
       }
       break;
-    case "status":
+    case "spark":
       if (!value[1]) {
-        this.render404({}, "", "/?404");
+        this._unload = this.render404();
       } else {
-        this.renderStatus(value[1]);
+        this._unload = this.renderSpark(value[1]);
       }
       break;
     case "timeline":
     default:
       if (this._loggedIn) {
-        this.renderTimeline(this._loggedIn);
+        this._unload = this.renderTimeline(this._loggedIn);
       } else {
-        this.renderHome();
+        this._unload = this.renderHome();
       }
       break;
   }
@@ -152,9 +176,17 @@ FirefeedUI.prototype.logout = function(e) {
   this.renderHome();
 };
 
-FirefeedUI.prototype.render404 == function() {
+FirefeedUI.prototype.render404 = function() {
   // TODO: Add 404 page.
   this.renderHome();
+};
+
+FirefeedUI.prototype.go_ = function(url) {
+  window.History.pushState(null, null, url);
+};
+
+FirefeedUI.prototype.goHome = function() {
+  this.go_("/");
 };
 
 FirefeedUI.prototype.renderHome = function(e) {
@@ -162,8 +194,7 @@ FirefeedUI.prototype.renderHome = function(e) {
     e.preventDefault();
   }
   if (this._loggedIn) {
-    this.renderTimeline(this._loggedIn);
-    return;
+    return this.renderTimeline(this._loggedIn);
   }
 
   $("#header").html($("#tmpl-index-header").html());
@@ -195,7 +226,6 @@ FirefeedUI.prototype.renderHome = function(e) {
       if (err) {
         self._spinner.stop();
         loginButton.css("visibility", "visible");
-        console.log(err);
       } else {
         self.renderTimeline(info);
       }
@@ -208,11 +238,13 @@ FirefeedUI.prototype.renderHome = function(e) {
   self._handleNewSpark(
     'spark-index-list', 5, self._firefeed.onLatestSpark.bind(self._firefeed)
   );
+  return function() { self._firefeed.unload(); };
 };
 
 FirefeedUI.prototype.renderTimeline = function(info) {
+  var self = this;
   $("#header").html($("#tmpl-page-header").html());
-  $("#top-logo").click(this.renderHome.bind(this));
+  $("#top-logo").click(this.goHome.bind(this));
   $("#logout-button").click(this.logout.bind(this));
 
   // Render placeholders for location / bio if not filled in.
@@ -227,7 +259,6 @@ FirefeedUI.prototype.renderTimeline = function(info) {
   $("#body").html(body);
 
   // Attach textarea handlers.
-  var self = this;
   var charCount = $("#c-count");
   var sparkText = $("#spark-input");
   $("#spark-button").css("visibility", "hidden");
@@ -243,7 +274,7 @@ FirefeedUI.prototype.renderTimeline = function(info) {
       charCount.css("color", "#999");
       $("#spark-button").css("visibility", "visible");
     }
-  };
+  }
   charCount.text(self._limit);
   sparkText.keyup(_textAreaHandler);
   sparkText.blur(_textAreaHandler);
@@ -278,12 +309,17 @@ FirefeedUI.prototype.renderTimeline = function(info) {
     self._editableHandler($(this).attr("id"), value);
     return value;
   });
+  return function() { self._firefeed.unload(); };
+};
+
+FirefeedUI.prototype.goProfile = function(uid) {
+  this.go_(uid);
 };
 
 FirefeedUI.prototype.renderProfile = function(uid) {
   var self = this;
   $("#header").html($("#tmpl-page-header").html());
-  $("#top-logo").click(this.renderHome.bind(this));
+  $("#top-logo").click(this.goHome.bind(this));
   if (self._loggedIn) {
     $("#logout-button").click(self.logout.bind(self));
   } else {
@@ -303,11 +339,16 @@ FirefeedUI.prototype.renderProfile = function(uid) {
   self._handleNewSpark(
     'spark-profile-list', 5, self._firefeed.onNewSparkFor.bind(self._firefeed, uid)
   );
+  return function() { self._firefeed.unload(); };
 };
 
-FirefeedUI.prototype.renderStatus = function(id) {
+FirefeedUI.prototype.goSpark = function(id) {
+  this.go_(id);
+};
+
+FirefeedUI.prototype.renderSpark = function(id) {
   $("#header").html($("#tmpl-page-header").html());
-  $("#top-logo").click(this.renderHome.bind(this));
+  $("#top-logo").click(this.goHome.bind(this));
   $("#logout-button").click(this.logout.bind(this));
 
   // Render spark page body.
@@ -329,4 +370,5 @@ FirefeedUI.prototype.renderStatus = function(id) {
       });
     }
   });
+  return function() { self._firefeed.unload(); };
 };

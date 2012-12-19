@@ -17,6 +17,7 @@ function Firefeed(baseURL, newContext) {
   this._firebase = null;
   this._mainUser = null;
   this._fullName = null;
+  this._handlers = [];
 
   if (!baseURL || typeof baseURL != "string") {
     throw new Error("Invalid baseURL provided");
@@ -55,22 +56,26 @@ Firefeed.prototype = {
     var self = this;
 
     // We listen for new children on the feed.
-    feed.on("child_added", function(snap) {
+    var handler = feed.on("child_added", function(snap) {
       // When a new spark is added, fetch the content from the master spark
       // list since feeds only contain references in the form of spark IDs.
       var sparkID = snap.name();
       var sparkRef = self._firebase.child("sparks").child(sparkID);
-      sparkRef.on("value", function(sparkSnap) {
+      var handler = sparkRef.on("value", function(sparkSnap) {
         var ret = sparkSnap.val();
         ret.pic = self._getPicURL(ret.author);
         onComplete(sparkSnap.name(), ret);
       });
+      self._handlers.push({ref: sparkRef, handler: handler, eventType: 'value'});
     });
 
+    this._handlers.push({ref: feed, handler: handler, eventType: 'child_added'});
+
     // Also listen for child_removed so we can call onOverflow appropriately.
-    feed.on("child_removed", function(snap) {
+    handler = feed.on("child_removed", function(snap) {
       onOverflow(snap.name());
     });
+    this._handlers.push({ref: feed, handler: handler, eventType: 'child_removed'});
   }
 };
 
@@ -199,11 +204,13 @@ Firefeed.prototype.logout = function() {
 Firefeed.prototype.getUserInfo = function(user, onComplete) {
   var self = this;
   self._validateCallback(onComplete, true);
-  self._firebase.child("people").child(user).on("value", function(snap) {
+  var ref = self._firebase.child("people").child(user);
+  var handler = ref.on("value", function(snap) {
     var val = snap.val();
     val.pic = self._getPicURL(snap.name(), true);
     onComplete(val);
   });
+  self._handlers.push({ref: ref, handler: handler, eventType: 'value'});
 };
 
 /**
@@ -362,7 +369,13 @@ Firefeed.prototype.getSuggestedUsers = function(onSuggestedUser) {
   // and make sure it is updated as needed.
   var followerList = [];
   self._mainUser.child("following").once("value", function(followSnap) {
-    followerList = Object.keys(followSnap.val() || {});
+    followerList = [];
+    var snap = followSnap.val() || {};
+    for (var k in snap) {
+      if (snap.hasOwnProperty(k)) {
+        followerList.push(k);
+      }
+    }
 
     // We limit to 20 to try to ensure that there are at least 5 you aren't already 
     // following.
@@ -505,4 +518,14 @@ Firefeed.prototype.onLatestSpark = function(count, onComplete, onOverflow) {
   feed = feed.limit(count || 5);
 
   this._onNewSparkForFeed(feed, onComplete, onOverflow);
-}
+};
+
+Firefeed.prototype.unload = function() {
+  for (var i = 0; i < this._handlers.length; ++i) {
+    var ref = this._handlers[i].ref;
+    var handler = this._handlers[i].handler;
+    var eventType = this._handlers[i].eventType;
+    ref.off(eventType, handler);
+  }
+  this._handlers = [];
+};
