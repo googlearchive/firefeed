@@ -309,7 +309,8 @@ h3,
 #footer{
   color:#656565;
   font-size: 13px;
-  padding: 20px 0;
+  padding-top: 50px;
+  padding-bottom: 20px;
   text-align: center;
 }
 
@@ -510,12 +511,12 @@ label.checkbox input{margin-right: 5px;}
 
 /* Custom
 ============================================================ */
-a {
+.wrapper a {
   color: #333;
   text-decoration: none;
 }
 
-a:hover {
+.wrapper a:hover {
   color: #333;
   text-decoration: none;
   border-bottom: 1px dashed;

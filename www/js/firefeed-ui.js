@@ -157,7 +157,7 @@ FirefeedUI.prototype.renderHome = function(e) {
   var img = new Image();
   img.src = path;
 
-  // Steup curl on hover.
+  // Setup curl on hover.
   $(".ribbon-curl").find("img").hover(function() {
     $(this).attr("src", path);
   }, function() {
