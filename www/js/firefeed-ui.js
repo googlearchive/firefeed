@@ -1,22 +1,7 @@
 
 var __ff_ui;
 $(function() {
-  // Load the Facebook SDK, then initialize FirefeedUI;
-  window.fbAsyncInit = function() {
-    FB.init({
-      appId      : "104907529680402",
-      channelUrl : "channel.html"
-    });
-    __ff_ui = new FirefeedUI();
-  };
-  (function(d, debug){
-    var js, id = "facebook-jssdk", ref = d.getElementsByTagName("script")[0];
-    if (d.getElementById(id)) {return;}
-    js = d.createElement("script"); js.id = id; js.async = true;
-    js.src = "//connect.facebook.net/en_US/all" +
-             (debug ? "/debug" : "") + ".js";
-    ref.parentNode.insertBefore(js, ref);
-  }(document, /*debug*/ false));
+  __ff_ui = new FirefeedUI();
 });
 
 function FirefeedUI() {
@@ -31,14 +16,10 @@ function FirefeedUI() {
 
   // Setup History listener.
   var self = this;
-  window.History.Adapter.bind(window, "statechange", function() {
-    self._pageController(window.History.getState().hash, false);
-  });
-
   // Figure out if the user is logged in or not, with silent login.
   self.login(function(info) {
     self._loggedIn = info;
-    self._pageController(window.History.getState().hash);
+    self._pageController(window.location.toString());
   });
 }
 
@@ -55,7 +36,7 @@ FirefeedUI.prototype._setupHandlers = function() {
 };
 
 FirefeedUI.prototype._go = function(url) {
-  window.History.pushState(null, null, url);
+  window.location = url;
 };
 
 FirefeedUI.prototype._pageController = function(url) {
@@ -129,7 +110,7 @@ FirefeedUI.prototype._handleNewSpark = function(listId, limit, func) {
       spark.friendlyTimestamp = self._formatDate(
         new Date(spark.timestamp || 0)
       );
-      var sparkEl = $(Mustache.to_html($("#tmpl-spark").html(), spark)).hide();
+      var sparkEl = $(_.template($("#tmpl-spark").html(), spark)).hide();
       $("#" + listId).prepend(sparkEl);
       sparkEl.slideDown("slow");
     }, function(sparkId) {
@@ -200,7 +181,10 @@ FirefeedUI.prototype.renderHome = function(e) {
     return this.renderTimeline(this._loggedIn);
   }
 
-  $("#header").html($("#tmpl-index-header").html());
+  $("#header").html(_.template(
+    $("#tmpl-header-content").html(), {homePage: true}
+  ));
+  $("#innerBody").html($("#tmpl-index-content").html());
 
   // Preload animation.
   var path = "img/curl-animate.gif";
@@ -213,11 +197,6 @@ FirefeedUI.prototype.renderHome = function(e) {
   }, function() {
     $(this).attr("src", "img/curl-static.gif");
   });
-
-  var body = Mustache.to_html($("#tmpl-content").html(), {
-    classes: "cf home", content: $("#tmpl-index-content").html()
-  });
-  $("#body").html(body);
 
   var self = this;
   var loginButton = $("#login-button");
@@ -247,7 +226,9 @@ FirefeedUI.prototype.renderHome = function(e) {
 
 FirefeedUI.prototype.renderTimeline = function(info) {
   var self = this;
-  $("#header").html($("#tmpl-page-header").html());
+  $("#header").html(_.template(
+    $("#tmpl-header-content").html(), {homePage: false}
+  ));
   $("#top-logo").click(this.goHome.bind(this));
   $("#logout-button").click(this.logout.bind(this));
 
@@ -256,11 +237,8 @@ FirefeedUI.prototype.renderTimeline = function(info) {
   info.bio = info.bio || "Your Bio...";
 
   // Render body.
-  var content = Mustache.to_html($("#tmpl-timeline-content").html(), info);
-  var body = Mustache.to_html($("#tmpl-content").html(), {
-    classes: "cf", content: content
-  });
-  $("#body").html(body);
+  var content = _.template($("#tmpl-timeline-content").html(), info);
+  $("#innerBody").html(content);
 
   // Attach textarea handlers.
   var charCount = $("#c-count");
@@ -295,7 +273,7 @@ FirefeedUI.prototype.renderTimeline = function(info) {
   // Get some "suggested" users.
   self._firefeed.getSuggestedUsers(function(userid, info) {
     info.id = userid;
-    $(Mustache.to_html($("#tmpl-suggested-user").html(), info)).
+    $(_.template($("#tmpl-suggested-user").html(), info)).
       appendTo("#suggested-users");
     var button = $("#followBtn-" + userid);
     // Fade out the suggested user if they were followed successfully.
@@ -323,7 +301,9 @@ FirefeedUI.prototype.goProfile = function(uid) {
 
 FirefeedUI.prototype.renderProfile = function(uid) {
   var self = this;
-  $("#header").html($("#tmpl-page-header").html());
+  $("#header").html(_.template(
+    $("#tmpl-header-content").html(), {homePage: false}
+  ));
   $("#top-logo").click(this.goHome.bind(this));
   if (self._loggedIn) {
     $("#logout-button").click(self.logout.bind(self));
@@ -332,12 +312,12 @@ FirefeedUI.prototype.renderProfile = function(uid) {
   }
 
   // Render profile page body.
-  $("#body").html(Mustache.to_html($("#tmpl-profile-body").html()));
+  $("#body").html(_.template($("#tmpl-profile-body").html()));
 
   // Update user info.
   self._firefeed.getUserInfo(uid, function(info) {
     info.id = uid;
-    var content = Mustache.to_html($("#tmpl-profile-content").html(), info);
+    var content = _.template($("#tmpl-profile-content").html(), info);
     $("#profile-content").html(content);
     var button = $("#followBtn-" + info.id);
 
@@ -368,7 +348,9 @@ FirefeedUI.prototype.goSpark = function(id) {
 };
 
 FirefeedUI.prototype.renderSpark = function(id) {
-  $("#header").html($("#tmpl-page-header").html());
+  $("#header").html(_.template(
+    $("#tmpl-header-content").html(), {homePage: false}
+  ));
   $("#top-logo").click(this.goHome.bind(this));
   $("#logout-button").click(this.logout.bind(this));
 
@@ -384,11 +366,8 @@ FirefeedUI.prototype.renderSpark = function(id) {
         spark.friendlyTimestamp = self._formatDate(
           new Date(spark.timestamp || 0)
         );
-        var content = Mustache.to_html($("#tmpl-spark-content").html(), spark);
-        var body = Mustache.to_html($("#tmpl-content").html(), {
-          classes: "cf", content: content
-        });
-        $("#body").html(body);
+        var content = _.template($("#tmpl-spark-content").html(), spark);
+        $("#innerBody").html(content);
       });
     }
   });
