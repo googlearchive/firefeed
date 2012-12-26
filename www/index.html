@@ -17,200 +17,25 @@
   <body>
     <div id="fb-root"></div>
     <div id="wrapper">
-
-      <header id="header">
-      </header>
-
-      <script id="tmpl-index-header" type="text/html">
-        <a target="_blank" href="http://github.com/firebase/firefeed" class="ribbon-github">
-          <img src="img/ribbon-github.png" alt="Fork me on GitHub" />
-        </a>
-        <a target="_blank" href="http://firebase.github.com" class="ribbon-curl">
-          <img src="img/curl-static.gif" width="200" height="200" alt="Official example"></a>
-        </a>
-      </script>
-      <script id="tmpl-page-header" type="text/html">
-        <div class="wrapper cf">
-          <h1 class="logo"><a href="#" id="top-logo"><img src="img/wordmark.png" alt="Firefeed" /></a></h1>
-          <nav>
-            <a id="logout-button" href="#">Logout</a>
-          </nav>
-        </div>
-      </script>
-
-      <div id="body">
-      </div>
-
-      <script id="tmpl-content" type="text/html">
-        <div id="content" class="{{classes}}">
-          <div class="wrapper">
-            <div class="row">
-              {{{content}}}
-            </div>
-          </div>
-        </div>
-      </script>
-
-      <script id="tmpl-index-content" type="text/html">
-        <div class="threefifth center aligncenter">
-          <img src="img/logo.png" />
-          <p>&nbsp;</p>
-          <h1 class="main-heading"><img src="img/wordmark-large.png" alt="Firefeed" /></h1>
-          <h2 class="subheading">
-            An <a target="_blank" href="http://github.com/firebase/firefeed">open source</a>
-            Twitter clone built with <a target="_blank" href="https://firebase.com">Firebase</a>.
-          </h2>
-          <p class="big-copy pushv8">Feel free to use and modify this in your own products and projects!</p>
-          
-          <div id="login-div" class="pushv4">
-            <a id="login-button" href="#" class="btn clean">
-              <span class="icon facebook"></span>
-              <span>Sign in with Facebook</span>
-            </a>
-          </div>
-          
-          <div class="pushv4">
-            <a href="about.html" class="btn default pushv4">Read more about Firefeed</a>
-          </div>
-
-          <hr/>
-
-          <h2 class="subheading">Latest Sparks</h2>
-          <ul id="spark-index-list" class="item-list">
-          </ul>
-        </div>
-      </script>
-
-      <script id="tmpl-timeline-content" type="text/html">
-        <div class="third">
-          <div class="media">
-            <div class="img avatar">
-              <a class="profile-link" href="/?profile={{id}}"><img src="{{pic}}" alt="{{name}}"></a>
-            </div>
-            <div class="body">
-              <h2 class="end"><a class="profile-link" href="/?profile={{id}}">{{name}}</a></h2>
-              <div class="big-copy end">
-                <div class="editable" id="inputLocation">{{location}}</div>
-              </div>
-              <div class="big-copy">
-                <div class="editable" id="inputBio">{{bio}}</div>
-              </div>
-            </div>
-          </div>
-          <div class="field">
-            <textarea id="spark-input" class="text" rows="4" cols="10" placeholder="Share an update"></textarea>
-          </div>
-          <small class="field-help"><span id="c-count"></span> characters remaining</small>
-          <div id="spark-button-div">
-            <a id="spark-button" href="#" class="btn default full pushv4">Update Status</a>
-          </div>
-          
-          <div class="separator pushv4"></div>
-          
-          <div id="suggested-users">
-            <h3>We suggest you follow:</h3>
-          </div>
-        </div>
-        <div class="twothird">
-          <ul id="spark-timeline-list" class="item-list">
-          </ul>
-        </div>
-      </script>
-
-      <script id="tmpl-spark-content" type="text/html">
-        <div class="threefifth center aligncenter pushdn4">
-          <div class="comment pushv6">
-            <div class="huge-copy pushv2">{{content}}</div>
-            <div class="meta">{{friendlyTimestamp}}</div>
-          </div>
-          
-          <div class="img avatar big pushv2 center">
-            <a class="profile-link" href="/?profile={{author}}"><img src="{{pic}}" alt="{{by}}" /></a>
-          </div>
-          <h2 class="pushv"><a class="profile-link" href="/?profile={{author}}">{{by}}</a></h2>
-        </div>
-      </script>
-
-      <script id="tmpl-profile-body" type="text/html">
-        <div class="threefifth center">
-          <div class="aligncenter pushv4">
-            <div id="profile-content">
-            </div>
-          </div>
-          <ul id="spark-profile-list" class="item-list">
-          </ul>
-        </div>
-      </script>
-
-      <script id="tmpl-profile-content" type="text/html">
-        <div class="img avatar big pushv2 center">
-          <img src="{{pic}}" alt="{{name}}" />
-        </div>
-        <h2 class="pushv">{{fullName}}</h2>
-        <p class="big-copy pushv">{{location}}</p>
-        <p class="big-copy end">{{bio}}</p>
-        <div class="pushv4">
-          <a href="#" id="followBtn-{{id}}" class="btn default pushv4">Follow</a>
-        </div>
-      </script>
-
-      <script id="tmpl-spark" type="text/html">
-        <li id="spark-{{sparkId}}">
-          <div class="media">
-            <div class="img avatar clean">
-              <a class="profile-link" href="/?profile={{author}}">
-                <img src="{{pic}}" alt="{{by}}" />
-              </a>
-            </div>
-            <div class="body {{relative}}">
-              <p class="title end">
-                <a class="profile-link" href="/?profile={{author}}">{{by}}</a>
-              </p>
-              <p class="main-copy pushv">{{content}}</p>
-              <p class="meta end">
-                <a class="spark-link" href="?spark={{sparkId}}">{{friendlyTimestamp}}</a>
-              </p>
-            </div>
-          </div>
-        </li>
-      </script>
-
-      <script id="tmpl-suggested-user" type="text/html">
-        <div class="media pushv4" id="followBox-{{id}}">
-          <div class="img avatar">
-            <a class="profile-link" href="/?profile={{id}}">
-              <img src="{{pic}}" alt="{{name}}" />
-            </a>
-          </div>
-          <div class="body">
-            <p class="big-copy end">
-              <a class="profile-link" href="/?profile={{id}}">{{fullName}}</a>
-            </p>
-            <p class="copy pushv">{{bio}}</p>
-            <a href="#" id="followBtn-{{id}}" class="btn default small">Follow</a>
-          </div>
-        </div>
-      </script>
-    </div><!-- #wrapper END -->
-
+      <header id="header"></header>
+      <div id="body"></div>
+    </div>
     <footer id="footer">
       <ul>
         <li id="about-link"><a href="about.html">About</a></li>
         <li>Follow <a href="//twitter.com/firebase" target="_blank">@Firebase</a></li>
       </ul>
     </footer>
-  
+
+    <!-- Includes -->
     <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/jqueryui/1.9.2/jquery-ui.min.js"></script>
     <script src="./libs/jquery.jeditable.mini.js"></script>
-    <script src="./libs/history.adapter.jquery.js"></script>
-    <script src="./libs/history.js"></script>
     <!--[if (gte IE 6)&(lte IE 8)]>
       <script src="//cdnjs.cloudflare.com/ajax/libs/selectivizr/1.0.2/selectivizr-min.js"></script>
     <![endif]-->
 
-    <!-- Templates by Mustache, Spinner by spin.js -->
-    <script src="//cdnjs.cloudflare.com/ajax/libs/mustache.js/0.7.0/mustache.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/backbone.js/0.9.2/backbone-min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/spin.js/1.2.7/spin.min.js"></script>
 
     <!-- Firebase.js and auth client must be included before Firefeed -->
@@ -221,5 +46,173 @@
     <script src="js/firefeed.js"></script>
     <script src="js/firefeed-ui.js"></script>
 
+    <!-- Templates -->
+    <script id="tmpl-index-header" type="text/template">
+      <a target="_blank" href="http://github.com/firebase/firefeed" class="ribbon-github">
+        <img src="img/ribbon-github.png" alt="Fork me on GitHub" />
+      </a>
+      <a target="_blank" href="http://firebase.github.com" class="ribbon-curl">
+        <img src="img/curl-static.gif" width="200" height="200" alt="Official example"></a>
+      </a>
+    </script>
+    <script id="tmpl-page-header" type="text/template">
+      <div class="wrapper cf">
+        <h1 class="logo"><a href="#" id="top-logo"><img src="img/wordmark.png" alt="Firefeed" /></a></h1>
+        <nav>
+          <a id="logout-button" href="#">Logout</a>
+        </nav>
+      </div>
+    </script>
+
+    <script id="tmpl-content" type="text/template">
+      <div id="content" class="{{classes}}">
+        <div class="wrapper">
+          <div class="row">
+            {{{content}}}
+          </div>
+        </div>
+      </div>
+    </script>
+
+    <script id="tmpl-index-content" type="text/template">
+      <div class="threefifth center aligncenter">
+        <img src="img/logo.png" />
+        <p>&nbsp;</p>
+        <h1 class="main-heading"><img src="img/wordmark-large.png" alt="Firefeed" /></h1>
+        <h2 class="subheading">
+          An <a target="_blank" href="http://github.com/firebase/firefeed">open source</a>
+          Twitter clone built with <a target="_blank" href="https://firebase.com">Firebase</a>.
+        </h2>
+        <p class="big-copy pushv8">Feel free to use and modify this in your own products and projects!</p>
+        
+        <div id="login-div" class="pushv4">
+          <a id="login-button" href="#" class="btn clean">
+            <span class="icon facebook"></span>
+            <span>Sign in with Facebook</span>
+          </a>
+        </div>
+        
+        <div class="pushv4">
+          <a href="about.html" class="btn default pushv4">Read more about Firefeed</a>
+        </div>
+
+        <hr/>
+
+        <h2 class="subheading">Latest Sparks</h2>
+        <ul id="spark-index-list" class="item-list">
+        </ul>
+      </div>
+    </script>
+
+    <script id="tmpl-timeline-content" type="text/template">
+      <div class="third">
+        <div class="media">
+          <div class="img avatar">
+            <a class="profile-link" href="/?profile={{id}}"><img src="{{pic}}" alt="{{name}}"></a>
+          </div>
+          <div class="body">
+            <h2 class="end"><a class="profile-link" href="/?profile={{id}}">{{name}}</a></h2>
+            <div class="big-copy end">
+              <div class="editable" id="inputLocation">{{location}}</div>
+            </div>
+            <div class="big-copy">
+              <div class="editable" id="inputBio">{{bio}}</div>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <textarea id="spark-input" class="text" rows="4" cols="10" placeholder="Share an update"></textarea>
+        </div>
+        <small class="field-help"><span id="c-count"></span> characters remaining</small>
+        <div id="spark-button-div">
+          <a id="spark-button" href="#" class="btn default full pushv4">Update Status</a>
+        </div>
+        
+        <div class="separator pushv4"></div>
+        
+        <div id="suggested-users">
+          <h3>We suggest you follow:</h3>
+        </div>
+      </div>
+      <div class="twothird">
+        <ul id="spark-timeline-list" class="item-list">
+        </ul>
+      </div>
+    </script>
+
+    <script id="tmpl-spark-content" type="text/template">
+      <div class="threefifth center aligncenter pushdn4">
+        <div class="comment pushv6">
+          <div class="huge-copy pushv2">{{content}}</div>
+          <div class="meta">{{friendlyTimestamp}}</div>
+        </div>
+        
+        <div class="img avatar big pushv2 center">
+          <a class="profile-link" href="/?profile={{author}}"><img src="{{pic}}" alt="{{by}}" /></a>
+        </div>
+        <h2 class="pushv"><a class="profile-link" href="/?profile={{author}}">{{by}}</a></h2>
+      </div>
+    </script>
+
+    <script id="tmpl-profile-body" type="text/template">
+      <div class="threefifth center">
+        <div class="aligncenter pushv4">
+          <div id="profile-content">
+          </div>
+        </div>
+        <ul id="spark-profile-list" class="item-list">
+        </ul>
+      </div>
+    </script>
+
+    <script id="tmpl-profile-content" type="text/template">
+      <div class="img avatar big pushv2 center">
+        <img src="{{pic}}" alt="{{name}}" />
+      </div>
+      <h2 class="pushv">{{fullName}}</h2>
+      <p class="big-copy pushv">{{location}}</p>
+      <p class="big-copy end">{{bio}}</p>
+      <div class="pushv4">
+        <a href="#" id="followBtn-{{id}}" class="btn default pushv4">Follow</a>
+      </div>
+    </script>
+
+    <script id="tmpl-spark" type="text/template">
+      <li id="spark-{{sparkId}}">
+        <div class="media">
+          <div class="img avatar clean">
+            <a class="profile-link" href="/?profile={{author}}">
+              <img src="{{pic}}" alt="{{by}}" />
+            </a>
+          </div>
+          <div class="body {{relative}}">
+            <p class="title end">
+              <a class="profile-link" href="/?profile={{author}}">{{by}}</a>
+            </p>
+            <p class="main-copy pushv">{{content}}</p>
+            <p class="meta end">
+              <a class="spark-link" href="?spark={{sparkId}}">{{friendlyTimestamp}}</a>
+            </p>
+          </div>
+        </div>
+      </li>
+    </script>
+
+    <script id="tmpl-suggested-user" type="text/template">
+      <div class="media pushv4" id="followBox-{{id}}">
+        <div class="img avatar">
+          <a class="profile-link" href="/?profile={{id}}">
+            <img src="{{pic}}" alt="{{name}}" />
+          </a>
+        </div>
+        <div class="body">
+          <p class="big-copy end">
+            <a class="profile-link" href="/?profile={{id}}">{{fullName}}</a>
+          </p>
+          <p class="copy pushv">{{bio}}</p>
+          <a href="#" id="followBtn-{{id}}" class="btn default small">Follow</a>
+        </div>
+      </div>
+    </script>
   </body>
 </html>
