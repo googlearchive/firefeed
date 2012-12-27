@@ -109,12 +109,12 @@
       <div class="third">
         <div class="media">
           <div class="img avatar">
-            <a class="profile-link" href="?profile=<%- id %> %>">
+            <a id="<%- id %>" href="#profile/<%- id %>">
               <img src="<%- pic %>" alt="<%- name %>"></a>
           </div>
           <div class="body">
             <h2 class="end">
-              <a class="profile-link" href="?profile=<%- id %>"><%- name %></a>
+              <a id="<%- id %>" href="#profile/<%- id %>"><%- name %></a>
             </h2>
             <div class="big-copy end">
               <div class="editable" id="inputLocation"><%- location %></div>
@@ -152,9 +152,9 @@
         </div>
         
         <div class="img avatar big pushv2 center">
-          <a class="profile-link" href="?profile=<%- author %>"><img src="<%- pic %>" alt="<%- by %>" /></a>
+          <a id="<%- author %>" href="#profile/<%- author %>"><img src="<%- pic %>" alt="<%- by %>" /></a>
         </div>
-        <h2 class="pushv"><a class="profile-link" href="?profile=<%- author %>"><%- by %></a></h2>
+        <h2 class="pushv"><a id="<%- author %>" href="#profile/<%- author %>"><%- by %></a></h2>
       </div>
     </script>
 
@@ -185,17 +185,17 @@
       <li id="spark-<%- sparkId %>">
         <div class="media">
           <div class="img avatar clean">
-            <a class="profile-link" href="?profile=<%- author %>">
+            <a id="<%- author %>" href="#profile/<%- author %>">
               <img src="<%- pic %>" alt="<%- by %>" />
             </a>
           </div>
           <div class="body">
             <p class="title end">
-              <a class="profile-link" href="?profile=<%- author %>"><%- by %></a>
+              <a id="<%- author %>" href="#profile/<%- author %>"><%- by %></a>
             </p>
             <p class="main-copy pushv"><%- content %></p>
             <p class="meta end">
-              <a class="spark-link" href="?spark=<%- sparkId %>"><%- friendlyTimestamp %></a>
+              <a id="<%- sparkId %>" href="#spark/<%- sparkId %>"><%- friendlyTimestamp %></a>
             </p>
           </div>
         </div>
@@ -205,13 +205,13 @@
     <script id="tmpl-suggested-user" type="text/template">
       <div class="media pushv4" id="followBox-<%- id %>">
         <div class="img avatar">
-          <a class="profile-link" href="?profile=<%- id %>">
+          <a id="<%- id %>" href="#profile/<%- id %>">
             <img src="<%- pic %>" alt="<%- name %>" />
           </a>
         </div>
         <div class="body">
           <p class="big-copy end">
-            <a class="profile-link" href="?profile=<%- id %>"><%- fullName %></a>
+            <a id="<%- id %>" href="#profile/<%- id %>"><%- fullName %></a>
           </p>
           <p class="copy pushv"><%- bio %></p>
           <a href="#" id="followBtn-<%- id %>" class="btn default small">Follow</a>
