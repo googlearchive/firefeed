@@ -35,16 +35,20 @@ FirefeedUI.prototype._setupHandlers = function() {
       "*splat": "home"
     },
     timeline: function() {
-      self.renderTimeline();
+      self._unload && self._unload();
+      self._unload = self.renderTimeline();
     },
     profile: function(id) {
-      self.renderProfile(id);
+      self._unload && self._unload();
+      self._unload = self.renderProfile(id);
     },
     spark: function(id) {
-      self.renderSpark(id);
+      self._unload && self._unload();
+      self._unload = self.renderSpark(id);
     },
     home: function() {
-      self.renderHome();
+      self._unload && self._unload();
+      self._unload = self.renderHome();
     }
   });
 
