@@ -21,7 +21,7 @@
       <div id="body">
         <div id="content">
           <div class="wrapper">
-            <div id="innerBody" class="row"></div>
+            <div id="inner-body" class="row"></div>
           </div>
         </div>
       </div>
@@ -42,7 +42,7 @@
     <![endif]-->
 
     <script src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.4.3/underscore-min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/backbone.js/0.9.2/backbone-min.js"></script>
+    <script src="//raw.github.com/documentcloud/backbone/master/backbone.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/spin.js/1.2.7/spin.min.js"></script>
 
     <!-- Load Facebook -->
@@ -182,24 +182,22 @@
     </script>
 
     <script id="tmpl-spark" type="text/template">
-      <li id="spark-<%- sparkId %>">
-        <div class="media">
-          <div class="img avatar clean">
-            <a id="<%- author %>" href="#profile/<%- author %>">
-              <img src="<%- pic %>" alt="<%- by %>" />
-            </a>
-          </div>
-          <div class="body">
-            <p class="title end">
-              <a id="<%- author %>" href="#profile/<%- author %>"><%- by %></a>
-            </p>
-            <p class="main-copy pushv"><%- content %></p>
-            <p class="meta end">
-              <a id="<%- sparkId %>" href="#spark/<%- sparkId %>"><%- friendlyTimestamp %></a>
-            </p>
-          </div>
+      <div class="media">
+        <div class="img avatar clean">
+          <a id="<%- author %>" href="#profile/<%- author %>">
+            <img src="<%- pic %>" alt="<%- by %>" />
+          </a>
         </div>
-      </li>
+        <div class="body">
+          <p class="title end">
+            <a id="<%- author %>" href="#profile/<%- author %>"><%- by %></a>
+          </p>
+          <p class="main-copy pushv"><%- content %></p>
+          <p class="meta end">
+            <a id="<%- sparkId %>" href="#spark/<%- sparkId %>"><%- friendlyTimestamp %></a>
+          </p>
+        </div>
+      </div>
     </script>
 
     <script id="tmpl-suggested-user" type="text/template">

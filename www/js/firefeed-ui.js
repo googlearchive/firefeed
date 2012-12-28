@@ -9,7 +9,6 @@ function FirefeedUI() {
   this._loggedIn = false;
   this._spinner = new Spinner();
   this._firefeed = new Firefeed("http://firefeed.firebaseio.com/");
-  this._unload = null;
 
   // Setup page navigation.
   this._router = null;
@@ -35,25 +34,21 @@ FirefeedUI.prototype._setupHandlers = function() {
       "*splat": "home"
     },
     timeline: function() {
-      self._unload && self._unload();
-      self._unload = self.renderTimeline();
+      self.renderTimeline();
     },
     profile: function(id) {
-      self._unload && self._unload();
-      self._unload = self.renderProfile(id);
+      self.renderProfile(id);
     },
     spark: function(id) {
-      self._unload && self._unload();
-      self._unload = self.renderSpark(id);
+      self.renderSpark(id);
     },
     home: function() {
-      self._unload && self._unload();
-      self._unload = self.renderHome();
+      self.renderHome();
     }
   });
 
   self._router = new mainRouter();
-  Backbone.history.start({root: "/firefeed/www/"});
+  Backbone.history.start();
 };
 
 FirefeedUI.prototype._postHandler = function(e) {
@@ -164,7 +159,7 @@ FirefeedUI.prototype.renderHome = function(e) {
   $("#header").html(_.template(
     $("#tmpl-header-content").html(), {homePage: true}
   ));
-  $("#innerBody").html($("#tmpl-index-content").html());
+  $("#inner-body").html($("#tmpl-index-content").html());
 
   // Preload animation.
   var path = "img/curl-animate.gif";
@@ -196,13 +191,6 @@ FirefeedUI.prototype.renderHome = function(e) {
   });
 
   $("#about-link").remove();
-
-  // Attach handler to display the latest 5 sparks.
-  self._handleNewSpark(
-    "spark-index-list", 5,
-    self._firefeed.onLatestSpark.bind(self._firefeed)
-  );
-  return function() { self._firefeed.unload(); };
 };
 
 FirefeedUI.prototype.renderTimeline = function() {
@@ -225,9 +213,9 @@ FirefeedUI.prototype.renderTimeline = function() {
   info.bio = info.bio || "Your Bio...";
 
   // Render body.
-  var content = _.template($("#tmpl-timeline-content").html(), info);
-  $("#innerBody").html(content);
+  new TimelineView({model: new User(info)}).render();
 
+  /*
   // Attach textarea handlers.
   var charCount = $("#c-count");
   var sparkText = $("#spark-input");
@@ -281,6 +269,7 @@ FirefeedUI.prototype.renderTimeline = function() {
     return value;
   });
   return function() { self._firefeed.unload(); };
+  */
 };
 
 FirefeedUI.prototype.renderProfile = function(uid) {
@@ -353,3 +342,69 @@ FirefeedUI.prototype.renderSpark = function(id) {
   });
   return function() { self._firefeed.unload(); };
 };
+
+// Backbone Models
+var sparkList = {};
+var Spark = Backbone.Model.extend({
+});
+User = Backbone.Model.extend({
+});
+
+// Backbone Collections
+var Feed = Backbone.Collection.extend({
+  model: Spark,
+  initialize: function() {
+    var self = this;
+    __ff_ui._firefeed.onNewSpark(10, function(sparkId, spark) {
+      spark.content = spark.content.substring(0, 141);
+      spark.sparkId = sparkId;
+      spark.friendlyTimestamp = __ff_ui._formatDate(new Date(spark.timestamp || 0));
+      var sparkModel = new Spark(spark);
+      sparkList[sparkId] = sparkModel;
+      self.trigger("add", sparkModel);
+    }, function(id) {
+      sparkList[id].trigger("remove");
+      delete sparkList[id];
+    });
+  }
+});
+
+// Backbone Views.
+var SparkView = Backbone.View.extend({
+  tagName: "li",
+  initialize: function() {
+    this.listenTo(this.model, "remove", this.removeSelf);
+  },
+  render: function() {
+    this.$el.html(_.template($("#tmpl-spark").html())(this.model.toJSON()));
+    return this;
+  },
+  removeSelf: function() {
+    var self = this;
+    setTimeout(function() {
+      this.$el.stop().slideToggle("slow", function() {
+        self.remove();
+      });
+    }, 100);
+  },
+});
+
+var TimelineView = Backbone.View.extend({
+  el: $("#inner-body"),
+  render: function() {
+    this.$el.html(_.template($("#tmpl-timeline-content").html())(this.model.toJSON()));
+    new TimelineFeedView();
+  }
+});
+
+var TimelineFeedView = Backbone.View.extend({
+  initialize: function() {
+    this.listenTo(new Feed(), "add", this.addSpark);
+  },
+  addSpark: function(spark) {
+    var view = new SparkView({model: spark, id: "spark-" + spark.get("sparkId")});
+    var sparkEl = view.render().$el;
+    $("#spark-timeline-list").prepend(sparkEl.hide());
+    sparkEl.slideDown("slow");
+  }
+});
