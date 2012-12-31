@@ -1,5 +1,5 @@
 
-var __ff_ui;
+var __ff_ui = null;
 $(function() {
   __ff_ui = new FirefeedUI();
 });
@@ -8,19 +8,18 @@ function FirefeedUI() {
   this._limit = 141;
   this._loggedIn = false;
   this._spinner = new Spinner();
-  this._firefeed = new Firefeed("http://firefeed.firebaseio.com/");
+  this._firefeed = new Firefeed("https://firefeed.firebaseio-staging.com/");
 
   // Setup page navigation.
   this._router = null;
-  this._setupHandlers();
 
   // Figure out if the user is logged in or not, with silent login.
   var self = this;
   this._firefeed.login(true, function(err, info) {
     if (!err && info) {
       self._loggedIn = info;
-      self._router.navigate("timeline", {trigger: true});
     }
+    self._setupHandlers();
   });
 }
 
@@ -78,29 +77,6 @@ FirefeedUI.prototype._postHandler = function(e) {
   });
 };
 
-FirefeedUI.prototype._handleNewSpark = function(listId, limit, func) {
-  var self = this;
-  func(
-    limit,
-    function(sparkId, spark) {
-      spark.content = spark.content.substring(0, self._limit);
-      spark.sparkId = sparkId;
-      spark.friendlyTimestamp = self._formatDate(
-        new Date(spark.timestamp || 0)
-      );
-      var sparkEl = $(_.template($("#tmpl-spark").html(), spark)).hide();
-      $("#" + listId).prepend(sparkEl);
-      sparkEl.slideDown("slow");
-    }, function(sparkId) {
-      setTimeout(function() {
-        $("#spark-" + sparkId).stop().slideToggle("slow", function() {
-          $(this).remove();
-        });
-      }, 100);
-    }
-  );
-};
-
 FirefeedUI.prototype._formatDate = function(date) {
   var localeDate = date.toLocaleString();
   // Remove GMT offset if it's there.
@@ -120,18 +96,6 @@ FirefeedUI.prototype._editableHandler = function(id, value) {
   }
   return true;
 }
-
-FirefeedUI.prototype.login = function(cb) {
-  // Try silent login in case the user is already logged in.
-  var self = this;
-  self._firefeed.login(true, function(err, info) {
-    if (!err && info) {
-      cb(info);
-    } else {
-      cb(false);
-    }
-  });
-};
 
 FirefeedUI.prototype.logout = function(e) {
   if (e) {
@@ -215,7 +179,6 @@ FirefeedUI.prototype.renderTimeline = function() {
   // Render body.
   new TimelineView({model: new User(info)}).render();
 
-  /*
   // Attach textarea handlers.
   var charCount = $("#c-count");
   var sparkText = $("#spark-input");
@@ -240,12 +203,6 @@ FirefeedUI.prototype.renderTimeline = function() {
   // Attach post spark button.
   $("#spark-button").click(self._postHandler.bind(self));
 
-  // Attach new spark event handler, capped to 10 for now.
-  self._handleNewSpark(
-    "spark-timeline-list", 10,
-    self._firefeed.onNewSpark.bind(self._firefeed)
-  );
-
   // Get some "suggested" users.
   self._firefeed.getSuggestedUsers(function(userid, info) {
     info.id = userid;
@@ -268,8 +225,6 @@ FirefeedUI.prototype.renderTimeline = function() {
     self._editableHandler($(this).attr("id"), value);
     return value;
   });
-  return function() { self._firefeed.unload(); };
-  */
 };
 
 FirefeedUI.prototype.renderProfile = function(uid) {
@@ -285,7 +240,7 @@ FirefeedUI.prototype.renderProfile = function(uid) {
   }
 
   // Render profile page body.
-  $("#innerBody").html(_.template($("#tmpl-profile-body").html()));
+  $("#inner-body").html(_.template($("#tmpl-profile-body").html()));
 
   // Update user info.
   self._firefeed.getUserInfo(uid, function(info) {
@@ -308,12 +263,8 @@ FirefeedUI.prototype.renderProfile = function(uid) {
     }
   });
 
-  // Render this user's tweets. Capped to 5 for now.
-  self._handleNewSpark(
-    "spark-profile-list", 5,
-    self._firefeed.onNewSparkFor.bind(self._firefeed, uid)
-  );
-  return function() { self._firefeed.unload(); };
+  // Render this user's tweets.
+  new FeedView({model: new Feed(5, uid), el: $("#spark-profile-list")});
 };
 
 FirefeedUI.prototype.renderSpark = function(id) {
@@ -340,22 +291,22 @@ FirefeedUI.prototype.renderSpark = function(id) {
       });
     }
   });
-  return function() { self._firefeed.unload(); };
 };
 
-// Backbone Models
+// Backbone Models.
 var sparkList = {};
 var Spark = Backbone.Model.extend({
 });
 User = Backbone.Model.extend({
 });
 
-// Backbone Collections
+// Backbone Collections.
 var Feed = Backbone.Collection.extend({
   model: Spark,
-  initialize: function() {
+  initialize: function(limit, uid) {
     var self = this;
-    __ff_ui._firefeed.onNewSpark(10, function(sparkId, spark) {
+    self._limit = limit || 10;
+    __ff_ui._firefeed.onNewSpark(self._limit, function(sparkId, spark) {
       spark.content = spark.content.substring(0, 141);
       spark.sparkId = sparkId;
       spark.friendlyTimestamp = __ff_ui._formatDate(new Date(spark.timestamp || 0));
@@ -365,7 +316,7 @@ var Feed = Backbone.Collection.extend({
     }, function(id) {
       sparkList[id].trigger("remove");
       delete sparkList[id];
-    });
+    }, uid);
   }
 });
 
@@ -382,7 +333,7 @@ var SparkView = Backbone.View.extend({
   removeSelf: function() {
     var self = this;
     setTimeout(function() {
-      this.$el.stop().slideToggle("slow", function() {
+      self.$el.stop().slideToggle("slow", function() {
         self.remove();
       });
     }, 100);
@@ -393,18 +344,18 @@ var TimelineView = Backbone.View.extend({
   el: $("#inner-body"),
   render: function() {
     this.$el.html(_.template($("#tmpl-timeline-content").html())(this.model.toJSON()));
-    new TimelineFeedView();
+    new FeedView({model: new Feed(), el: $("#spark-timeline-list")});
   }
 });
 
-var TimelineFeedView = Backbone.View.extend({
+var FeedView = Backbone.View.extend({
   initialize: function() {
-    this.listenTo(new Feed(), "add", this.addSpark);
+    this.listenTo(this.model, "add", this.addSpark);
   },
   addSpark: function(spark) {
     var view = new SparkView({model: spark, id: "spark-" + spark.get("sparkId")});
     var sparkEl = view.render().$el;
-    $("#spark-timeline-list").prepend(sparkEl.hide());
+    this.$el.prepend(sparkEl.hide());
     sparkEl.slideDown("slow");
   }
 });
