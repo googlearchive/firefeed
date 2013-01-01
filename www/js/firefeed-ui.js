@@ -155,6 +155,9 @@ FirefeedUI.prototype.renderHome = function(e) {
   });
 
   $("#about-link").remove();
+
+  // Render latest global sparks.
+  new FeedView({model: new Feed(5), el: $("#spark-index-list")});
 };
 
 FirefeedUI.prototype.renderTimeline = function() {
@@ -304,9 +307,14 @@ User = Backbone.Model.extend({
 var Feed = Backbone.Collection.extend({
   model: Spark,
   initialize: function(limit, uid) {
+    this._uid = uid;
+    this._limit = limit || 10;
+    this._func = __ff_ui._firefeed.onNewSparkFrom.bind(__ff_ui._firefeed);
+    this._setupCallback();
+  },
+  _setupCallback: function() {
     var self = this;
-    self._limit = limit || 10;
-    __ff_ui._firefeed.onNewSpark(self._limit, function(sparkId, spark) {
+    self._func(self._limit, function(sparkId, spark) {
       spark.content = spark.content.substring(0, 141);
       spark.sparkId = sparkId;
       spark.friendlyTimestamp = __ff_ui._formatDate(new Date(spark.timestamp || 0));
@@ -316,7 +324,16 @@ var Feed = Backbone.Collection.extend({
     }, function(id) {
       sparkList[id].trigger("remove");
       delete sparkList[id];
-    }, uid);
+    }, self._uid);
+  }
+});
+
+var UserFeed = Feed.extend({
+  initialize: function(limit, uid) {
+    this._uid = uid;
+    this._limit = limit || 10;
+    this._func = __ff_ui._firefeed.onNewSpark.bind(__ff_ui._firefeed);
+    this._setupCallback();
   }
 });
 
@@ -344,7 +361,7 @@ var TimelineView = Backbone.View.extend({
   el: $("#inner-body"),
   render: function() {
     this.$el.html(_.template($("#tmpl-timeline-content").html())(this.model.toJSON()));
-    new FeedView({model: new Feed(), el: $("#spark-timeline-list")});
+    new FeedView({model: new UserFeed(10), el: $("#spark-timeline-list")});
   }
 });
 

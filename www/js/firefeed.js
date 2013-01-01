@@ -441,15 +441,15 @@ Firefeed.prototype.setProfileField = function(field, value) {
  * ensure that the total number of sparks displayed on your page will never
  * exceed the number specified.
  *
- * If you are authenticated through login(), you may omit the user ID argument
- * and a handler will be set for the feed of the currently logged in user.
+ * If you are authenticated through the login() call, you may omit the user ID
+ * and a feed will be provided for the currently logged in user.
  *
  * @param    {number}    total       The maximum number of sparks to report.
  *                                   If new sparks are added after this event
  *                                   handler is set, they will also be reported
  *                                   but the onOverflow callback will be
  *                                   invoked with the oldest sparks to
- *                                   compensate. Defaults to 100.
+ *                                   compensate. Defaults to 10.
  *
  * @param    {Function}  onComplete  The callback to call whenever a new spark
  *                                   appears on the current user's feed. The
@@ -461,40 +461,41 @@ Firefeed.prototype.setProfileField = function(field, value) {
  *
  * @param    {Function}  onOverflow  The callback that will be called when
  *                                   onComplete has already been called
- *                                   count times, to keep the total number
- *                                   of reported sparks capped at count.
+ *                                   num times, to keep the total number
+ *                                   of reported sparks capped at num.
  *                                   This will be called with one argument,
  *                                   the spark ID of the spark expected to
  *                                   removed (the oldest spark).
  *
- * @param    {string}    id          Optional if preceded by a successful
- *                                   call to login(). The user ID from whom
- *                                   the sparks are fetched.
+ * @param    {string}    id          Optional if authenticated by login().
+ *                                   The user from whose feed the sparks must
+ *                                   be fetched.
  */
-Firefeed.prototype.onNewSpark = function(count, onComplete, onOverflow, id) {
+Firefeed.prototype.onNewSpark = function(num, onComplete, onOverflow, id) {
   this._validateCallback(onComplete);
   this._validateCallback(onOverflow);
 
-  if (!this._mainUser && !id) {
-    throw new Error("User ID not provided to onNewSpark but not logged in");
-  }
-
   var feed;
   if (id) {
-    feed = this._firebase.child("users").child(id).child("sparks");
-  } else {
+    feed = this._firebase.child("users").child(id).child("feed");
+  } else if (this._mainUser) {
     feed = this._mainUser.child("feed");
+  } else {
+    throw new Error("User ID omitted in onNewSpark, but not logged in!");
   }
-  this._onNewSparkForFeed(feed.limit(count || 100), onComplete, onOverflow);
+  this._onNewSparkForFeed(feed.limit(num || 100), onComplete, onOverflow);
 };
 
 /**
- * Register a callback to get the latest sparks (default 5). The onComplete and 
- * onOverflow handlers will be invoked in the same manner as onNewSparkFor.
+ * Register a callback to get the latest sparks (default 10) posted by a
+ * specified user. The onComplete and onOverflow handlers will be invoked in
+ * the same manner as onNewSpark. The user ID argument is optional, and if
+ * omitted, the latest 'num' sparks from all users will be reported.
  *
  * You do not need to be authenticated to use this function.
  *
- * @param    {number}    count       The maximum number of sparks to report.
+ * @param    {number}    num       The maximum number of sparks to report.
+ *                                   Defaults to 10.
  *
  * @param    {Function}  onComplete  The callback to call whenever a new spark
  *                                   is added to the latest set.
@@ -502,14 +503,22 @@ Firefeed.prototype.onNewSpark = function(count, onComplete, onOverflow, id) {
  * @param    {Function}  onOverflow  The callback that will be called when
  *                                   a spark needs to be evicted from the
  *                                   latest set.
+ *
+ * @param    {string}    id          The user whose sparks must be fetched.
+ *                                   If omitted, the latest 'num' sparks from
+ *                                   all users will be provided.
  */
-Firefeed.prototype.onLatestSpark = function(count, onComplete, onOverflow) {
+Firefeed.prototype.onNewSparkFrom = function(num, onComplete, onOverflow, id) {
   this._validateCallback(onComplete, true);
   this._validateCallback(onOverflow, true);
 
-  var feed = this._firebase.child("recent-sparks");
-  feed = feed.limit(count || 5);
-
+  var feed;
+  if (id) {
+    feed = this._firebase.child("users").child(id).child("sparks");
+  } else {
+    feed = this._firebase.child("recent-sparks");
+  }
+  feed = feed.limit(num || 10);
   this._onNewSparkForFeed(feed, onComplete, onOverflow);
 };
 
