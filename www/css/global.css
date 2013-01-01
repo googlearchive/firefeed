@@ -555,6 +555,10 @@ h2.subheading a:hover {
   color: #AB8319;
 }
 
+#login-div {
+  min-height: 60px;
+}
+
 #suggested-users {
   min-height: 200px;
 }

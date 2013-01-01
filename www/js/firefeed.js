@@ -117,6 +117,11 @@ Firefeed.prototype.login = function(silent, onComplete) {
   var self = this;
   self._validateCallback(onComplete, true);
 
+  setTimeout(function() {
+    onComplete(new Error("foo"), null);
+  }, 1000);
+  return;
+
   // We store the Firebase token in localStorage, so if one isn't present
   // we'll assume the user hasn't logged in.
   var token = localStorage.getItem("authToken");

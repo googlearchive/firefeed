@@ -4,14 +4,12 @@ $(function() {
   __ff_ui = new FirefeedUI();
 });
 
+/* Controller */
 function FirefeedUI() {
   this._limit = 141;
-  this._loggedIn = false;
-  this._spinner = new Spinner();
-  this._firefeed = new Firefeed("https://firefeed.firebaseio-staging.com/");
-
-  // Setup page navigation.
   this._router = null;
+  this._loggedIn = false;
+  this._firefeed = new Firefeed("https://firefeed.firebaseio-staging.com/");
 
   // Figure out if the user is logged in or not, with silent login.
   var self = this;
@@ -24,6 +22,26 @@ function FirefeedUI() {
 }
 
 FirefeedUI.prototype._setupHandlers = function() {
+  // Setup collections.
+  var self = this;
+  var sparkList = {};
+
+  // Global feed of all user's sparks.
+  var globalFeed = new FirefeedUI.Feed();
+  self._firefeed.onNewSparkFrom(5, function(sparkId, spark) {
+    spark.sparkId = sparkId;
+    spark.content = spark.content.substring(0, self._limit);
+    spark.friendlyTimestamp = self._formatDate(new Date(spark.timestamp || 0));
+    
+    var sparkModel = new FirefeedUI.Spark(spark);
+    sparkList[sparkId] = sparkModel;
+    globalFeed.add(sparkModel);
+  }, function(id) {
+    globalFeed.remove(sparkList[id]);
+    delete sparkList[id];
+  });
+
+  // Setup routes.
   var self = this;
   var mainRouter = Backbone.Router.extend({
     routes: {
@@ -42,12 +60,36 @@ FirefeedUI.prototype._setupHandlers = function() {
       self.renderSpark(id);
     },
     home: function() {
-      self.renderHome();
+      var view = new FirefeedUI.HomeView({collection: globalFeed});
+      view.on("firefeed:login", function() {
+        self._firefeed.login(false, function(err, info) {
+          if (err) {
+            view.trigger("firefeed:login:failed");
+          } else {
+            self._loggedIn = info;
+            self._router.navigate("timeline", {trigger: true});
+          }
+        });
+      });
+      self._showView(view, true);
     }
   });
 
-  self._router = new mainRouter();
+  this._router = new mainRouter();
   Backbone.history.start();
+};
+
+FirefeedUI.prototype._showView = function(view, isHome) {
+  if (this._currentView) {
+    this._currentView.body.close();
+    this._currentView.header.close();
+  }
+  this._currentView = {
+    body: view,
+    header: new FirefeedUI.HeaderView({_isHome: isHome})
+  };
+  this._currentView.header.render();
+  this._currentView.body.render();
 };
 
 FirefeedUI.prototype._postHandler = function(e) {
@@ -113,51 +155,6 @@ FirefeedUI.prototype.render404 = function() {
 
 FirefeedUI.prototype.goHome = function() {
   this._router.navigate("timeline", {trigger: true});
-};
-
-FirefeedUI.prototype.renderHome = function(e) {
-  if (e) {
-    e.preventDefault();
-  }
-
-  $("#header").html(_.template(
-    $("#tmpl-header-content").html(), {homePage: true}
-  ));
-  $("#inner-body").html($("#tmpl-index-content").html());
-
-  // Preload animation.
-  var path = "img/curl-animate.gif";
-  var img = new Image();
-  img.src = path;
-
-  // Setup curl on hover.
-  $(".ribbon-curl").find("img").hover(function() {
-    $(this).attr("src", path);
-  }, function() {
-    $(this).attr("src", "img/curl-static.gif");
-  });
-
-  var self = this;
-  var loginButton = $("#login-button");
-  loginButton.click(function(e) {
-    e.preventDefault();
-    loginButton.css("visibility", "hidden");
-    self._spinner.spin($("#login-div").get(0));
-    self._firefeed.login(false, function(err, info) {
-      if (err) {
-        self._spinner.stop();
-        loginButton.css("visibility", "visible");
-      } else {
-        self._loggedIn = info;
-        self._router.navigate("timeline", {trigger: true});
-      }
-    });
-  });
-
-  $("#about-link").remove();
-
-  // Render latest global sparks.
-  new FeedView({model: new Feed(5), el: $("#spark-index-list")});
 };
 
 FirefeedUI.prototype.renderTimeline = function() {
@@ -296,53 +293,28 @@ FirefeedUI.prototype.renderSpark = function(id) {
   });
 };
 
-// Backbone Models.
-var sparkList = {};
-var Spark = Backbone.Model.extend({
-});
-User = Backbone.Model.extend({
-});
-
-// Backbone Collections.
-var Feed = Backbone.Collection.extend({
-  model: Spark,
-  initialize: function(limit, uid) {
-    this._uid = uid;
-    this._limit = limit || 10;
-    this._func = __ff_ui._firefeed.onNewSparkFrom.bind(__ff_ui._firefeed);
-    this._setupCallback();
-  },
-  _setupCallback: function() {
-    var self = this;
-    self._func(self._limit, function(sparkId, spark) {
-      spark.content = spark.content.substring(0, 141);
-      spark.sparkId = sparkId;
-      spark.friendlyTimestamp = __ff_ui._formatDate(new Date(spark.timestamp || 0));
-      var sparkModel = new Spark(spark);
-      sparkList[sparkId] = sparkModel;
-      self.trigger("add", sparkModel);
-    }, function(id) {
-      sparkList[id].trigger("remove");
-      delete sparkList[id];
-    }, self._uid);
+/* Convenience close method to clean up views */
+Backbone.View.prototype.close = function() {
+  this.remove();
+  this.off();
+  if (this.onClose) {
+    this.onClose();
   }
+};
+
+/* Backbone Models */
+FirefeedUI.User = Backbone.Model.extend({
+});
+FirefeedUI.Spark = Backbone.Model.extend({
 });
 
-var UserFeed = Feed.extend({
-  initialize: function(limit, uid) {
-    this._uid = uid;
-    this._limit = limit || 10;
-    this._func = __ff_ui._firefeed.onNewSpark.bind(__ff_ui._firefeed);
-    this._setupCallback();
-  }
+/* Backbone Collections */
+FirefeedUI.Feed = Backbone.Collection.extend({
 });
 
-// Backbone Views.
-var SparkView = Backbone.View.extend({
+/* Backbone Views */
+FirefeedUI.SparkView = Backbone.View.extend({
   tagName: "li",
-  initialize: function() {
-    this.listenTo(this.model, "remove", this.removeSelf);
-  },
   render: function() {
     this.$el.html(_.template($("#tmpl-spark").html())(this.model.toJSON()));
     return this;
@@ -354,25 +326,100 @@ var SparkView = Backbone.View.extend({
         self.remove();
       });
     }, 100);
-  },
+  }
 });
 
-var TimelineView = Backbone.View.extend({
+FirefeedUI.FeedView = Backbone.View.extend({
+  initialize: function() {
+    this._sparks = {};
+    this.listenTo(this.model, "add", this.addSpark);
+    this.listenTo(this.model, "remove", this.removeSpark);
+  },
+  addSpark: function(spark) {
+    var id = spark.get("sparkId");
+    var view = new FirefeedUI.SparkView({model: spark, id: "spark-" + id});
+    this._sparks[id] = view;
+
+    var sparkEl = view.render().$el;
+    this.$el.prepend(sparkEl.hide());
+    sparkEl.slideDown("slow");
+  },
+  removeSpark: function(spark) {
+    var id = spark.get("sparkId");
+    this._sparks[id].removeSelf();
+    delete this._sparks[id];
+  },
+  onClose: function() {
+    _.each(this._sparks, function(view) {
+      view.close();
+    });
+  }
+});
+
+FirefeedUI.HeaderView = Backbone.View.extend({
+  el: $("#header"),
+  initialize: function(options) {
+    this._isHome = options._isHome;
+  },
+  render: function() {
+    this.$el.html(_.template(
+      $("#tmpl-header-content").html(), {homePage: this._isHome}
+    ));
+  },
+  events: function() {
+    if (this._isHome) {
+      // Preload curl animationg gif.
+      this._curlPath = "img/curl-animate.gif";
+      var img = new Image();
+      img.src = this._curlPath;
+      return { "hover .ribbon-curl > img": "curl" };
+    }
+  },
+  curl: function(e) {
+    if (e.type == "mouseenter") {
+      $(e.target).attr("src", this._curlPath);
+    } else {
+      $(e.target).attr("src", "img/curl-static.gif");
+    }
+  }
+});
+
+FirefeedUI.HomeView = Backbone.View.extend({
+  el: $("#inner-body"),
+  events: {
+    "click #login-button": "login"
+  },
+  render: function() {
+    this.$el.html($("#tmpl-index-content").html());
+    this._spinner = new Spinner();
+    this._button = $("#login-button");
+    this.on("firefeed:login:failed", this.loginFailed);
+    this._globalFeedView = new FirefeedUI.FeedView({
+      model: this.collection, el: $("#spark-index-list")
+    });
+    this._globalFeedView.render();
+  },
+  login: function(e) {
+    e.preventDefault();
+    this._button.hide();
+    this._spinner.spin($("#login-div").get(0));
+    this.trigger("firefeed:login");
+  },
+  loginFailed: function() {
+    this._spinner.stop();
+    this._button.show();
+    humane.addnCls = "humane-jackedup-error";
+    humane.log("Sorry, there was an error while logging in!");
+  },
+  onClose: function() {
+    this._globalFeedView.close();
+  }
+});
+
+FirefeedUI.TimelineView = Backbone.View.extend({
   el: $("#inner-body"),
   render: function() {
     this.$el.html(_.template($("#tmpl-timeline-content").html())(this.model.toJSON()));
     new FeedView({model: new UserFeed(10), el: $("#spark-timeline-list")});
-  }
-});
-
-var FeedView = Backbone.View.extend({
-  initialize: function() {
-    this.listenTo(this.model, "add", this.addSpark);
-  },
-  addSpark: function(spark) {
-    var view = new SparkView({model: spark, id: "spark-" + spark.get("sparkId")});
-    var sparkEl = view.render().$el;
-    this.$el.prepend(sparkEl.hide());
-    sparkEl.slideDown("slow");
   }
 });
