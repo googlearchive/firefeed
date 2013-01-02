@@ -182,7 +182,6 @@ FirefeedUI.prototype.renderTimeline = function() {
   var sparkList = {};
   var userFeed = new FirefeedUI.Feed();
   self._firefeed.onNewSpark(10, function(sparkId, spark) {
-    console.log("got spark " + sparkId + " : " + spark.content);
     spark.sparkId = sparkId;
     spark.content = spark.content.substring(0, self._limit);
     spark.friendlyTimestamp = self._formatDate(new Date(spark.timestamp || 0));
