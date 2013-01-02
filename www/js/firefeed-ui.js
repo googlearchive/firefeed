@@ -101,7 +101,9 @@ FirefeedUI.prototype._postHandler = function(e) {
   var self = this;
   e.preventDefault();
   sparkButton.replaceWith(message);
-  self._spinner.spin(containerEl.get(0));
+
+  var spinner = new Spinner();
+  spinner.spin(containerEl.get(0));
   self._firefeed.post(sparkText.val(), function(err, done) {
     if (!err) {
       message.html("Posted!").css("background", "#008000");
@@ -109,7 +111,7 @@ FirefeedUI.prototype._postHandler = function(e) {
     } else {
       message.html("Posting failed!").css("background", "#FF6347");
     }
-    self._spinner.stop();
+    spinner.stop();
     $("#c-count").val(self._limit);
     message.css("visibility", "visible");
     message.fadeOut(1500, function() {
@@ -177,7 +179,23 @@ FirefeedUI.prototype.renderTimeline = function() {
   info.bio = info.bio || "Your Bio...";
 
   // Render body.
-  new TimelineView({model: new User(info)}).render();
+  var sparkList = {};
+  var userFeed = new FirefeedUI.Feed();
+  self._firefeed.onNewSpark(10, function(sparkId, spark) {
+    console.log("got spark " + sparkId + " : " + spark.content);
+    spark.sparkId = sparkId;
+    spark.content = spark.content.substring(0, self._limit);
+    spark.friendlyTimestamp = self._formatDate(new Date(spark.timestamp || 0));
+    var sparkModel = new FirefeedUI.Spark(spark);
+    sparkList[sparkId] = sparkModel;
+    userFeed.add(sparkModel);
+  }, function(id) {
+    userFeed.remove(sparkList[id]);
+    delete sparkList[id];
+  });
+  new FirefeedUI.TimelineView({
+    model: new FirefeedUI.User(info), collection: userFeed
+  }).render();
 
   // Attach textarea handlers.
   var charCount = $("#c-count");
@@ -264,7 +282,7 @@ FirefeedUI.prototype.renderProfile = function(uid) {
   });
 
   // Render this user's tweets.
-  new FeedView({model: new Feed(5, uid), el: $("#spark-profile-list")});
+  //new FeedView({model: new Feed(5, uid), el: $("#spark-profile-list")});
 };
 
 FirefeedUI.prototype.renderSpark = function(id) {
@@ -310,6 +328,10 @@ FirefeedUI.Spark = Backbone.Model.extend({
 
 /* Backbone Collections */
 FirefeedUI.Feed = Backbone.Collection.extend({
+  model: FirefeedUI.Spark,
+  comparator: function(spark) {
+    return parseInt(spark.get("timestamp"), 10);
+  }
 });
 
 /* Backbone Views */
@@ -332,8 +354,9 @@ FirefeedUI.SparkView = Backbone.View.extend({
 FirefeedUI.FeedView = Backbone.View.extend({
   initialize: function() {
     this._sparks = {};
-    this.listenTo(this.model, "add", this.addSpark);
-    this.listenTo(this.model, "remove", this.removeSpark);
+    _.forEach(this.collection, this.addSpark);
+    this.listenTo(this.collection, "add", this.addSpark);
+    this.listenTo(this.collection, "remove", this.removeSpark);
   },
   addSpark: function(spark) {
     var id = spark.get("sparkId");
@@ -368,7 +391,7 @@ FirefeedUI.HeaderView = Backbone.View.extend({
   },
   events: function() {
     if (this._isHome) {
-      // Preload curl animationg gif.
+      // Preload curl animation gif.
       this._curlPath = "img/curl-animate.gif";
       var img = new Image();
       img.src = this._curlPath;
@@ -395,7 +418,7 @@ FirefeedUI.HomeView = Backbone.View.extend({
     this._button = $("#login-button");
     this.on("firefeed:login:failed", this.loginFailed);
     this._globalFeedView = new FirefeedUI.FeedView({
-      model: this.collection, el: $("#spark-index-list")
+      collection: this.collection, el: $("#spark-index-list")
     });
     this._globalFeedView.render();
   },
@@ -419,7 +442,14 @@ FirefeedUI.HomeView = Backbone.View.extend({
 FirefeedUI.TimelineView = Backbone.View.extend({
   el: $("#inner-body"),
   render: function() {
-    this.$el.html(_.template($("#tmpl-timeline-content").html())(this.model.toJSON()));
-    new FeedView({model: new UserFeed(10), el: $("#spark-timeline-list")});
+    var template = _.template($("#tmpl-timeline-content").html());
+    this.$el.html(template(this.model.toJSON()));
+    this._userFeedView = new FirefeedUI.FeedView({
+      collection: this.collection, el: $("#spark-timeline-list")
+    });
+    this._userFeedView.render();
+  },
+  onClose: function() {
+    this._userFeedView.close();
   }
 });
