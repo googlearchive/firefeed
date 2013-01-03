@@ -20,6 +20,7 @@ function FirefeedUI() {
     if (!err && info) {
       self._loggedIn = info;
     }
+    self._setupEvents();
     self._setupHandlers();
   });
 }
@@ -52,18 +53,6 @@ FirefeedUI.prototype._setupHandlers = function() {
       var view = new FirefeedUI.TimelineView({
         model: new FirefeedUI.User(info), collection: self._getUserFeed(),
         limit: self._limit
-      });
-      Backbone.on("firefeed:post", function(post) {
-        self._firefeed.post(post, function(err, done) {
-          if (err) {
-            Backbone.trigger("firefeed:post:failed");
-          } else {
-            Backbone.trigger("firefeed:post:success"); 
-          }
-        });
-      });
-      Backbone.on("firefeed:profile", function(key, value) {
-        self._firefeed.setProfileField(key, value);
       });
       self._showView(view);
     },
@@ -99,22 +88,46 @@ FirefeedUI.prototype._setupHandlers = function() {
     },
     home: function() {
       var view = new FirefeedUI.HomeView({collection: self._getFeed()});
-      Backbone.on("firefeed:login", function() {
-        self._firefeed.login(false, function(err, info) {
-          if (err) {
-            Backbone.trigger("firefeed:login:failed");
-          } else {
-            self._loggedIn = info;
-            self._router.navigate("timeline", {trigger: true});
-          }
-        });
-      });
       self._showView(view, true);
     }
   });
 
   this._router = new mainRouter();
   Backbone.history.start();
+};
+
+FirefeedUI.prototype._setupEvents = function() {
+  var self = this;
+  Backbone.on("firefeed:post", function(post) {
+    self._firefeed.post(post, function(err, done) {
+      if (err) {
+        Backbone.trigger("firefeed:post:failed");
+      } else {
+        Backbone.trigger("firefeed:post:success"); 
+      }
+    });
+  });
+  Backbone.on("firefeed:profile", function(key, value) {
+    self._firefeed.setProfileField(key, value);
+  });
+  Backbone.on("firefeed:login", function() {
+    self._firefeed.login(false, function(err, info) {
+      if (err) {
+        Backbone.trigger("firefeed:login:failed");
+      } else {
+        self._loggedIn = info;
+        self._router.navigate("timeline", {trigger: true});
+      }
+    });
+  });
+  Backbone.on("firefeed:home", function() {
+    self._router.navigate("home", {trigger: true});
+  });
+  Backbone.on("firefeed:logout", function() {
+    self._firefeed.logout();
+    self._loggedIn = false;
+    self._router.navigate("home", {trigger: true});
+  });
 };
 
 FirefeedUI.prototype._getFeed = function(uid) {
@@ -181,17 +194,6 @@ FirefeedUI.prototype._showView = function(view, isHome) {
     body: view,
     header: new FirefeedUI.HeaderView({_isHome: isHome, _user: this._loggedIn})
   };
-
-  var self = this;
-  Backbone.on("firefeed:home", function() {
-    self._router.navigate("home", {trigger: true});
-  });
-  Backbone.on("firefeed:logout", function() {
-    self._firefeed.logout();
-    self._loggedIn = false;
-    self._router.navigate("home", {trigger: true});
-  });
-
   this._currentView.header.render();
   this._currentView.body.render();
 };
@@ -337,6 +339,9 @@ FirefeedUI.HeaderView = Backbone.View.extend({
 
 FirefeedUI.HomeView = Backbone.View.extend({
   el: $("#inner-body"),
+  initialize: function() {
+    this.listenTo(Backbone, "firefeed:login:failed", this.loginFailed);
+  },
   events: {
     "click #login-button": "login"
   },
@@ -344,7 +349,6 @@ FirefeedUI.HomeView = Backbone.View.extend({
     this.$el.html($("#tmpl-index-content").html());
     this._spinner = new Spinner();
     this._button = $("#login-button");
-    Backbone.on("firefeed:login:failed", this.loginFailed);
     this._globalFeedView = new FirefeedUI.FeedView({
       collection: this.collection, el: $("#spark-index-list")
     });
