@@ -96,6 +96,9 @@ FirefeedUI.prototype._setupHandlers = function() {
           }
         });
       });
+      Backbone.on("firefeed:profile", function(key, value) {
+        self._firefeed.setProfileField(key, value);
+      });
       self._showView(view);
     },
     profile: function(id) {
@@ -159,16 +162,6 @@ FirefeedUI.prototype._formatDate = function(date) {
   return localeDate;
 };
 
-FirefeedUI.prototype._editableHandler = function(id, value) {
-  if (id == "inputLocation") {
-    this._firefeed.setProfileField("location", value);
-  }
-  if (id == "inputBio") {
-    this._firefeed.setProfileField("bio", value);
-  }
-  return true;
-}
-
 FirefeedUI.prototype.renderTimeline = function() {
   var self = this;
 
@@ -187,12 +180,6 @@ FirefeedUI.prototype.renderTimeline = function() {
         $("#followBox-" + userid).fadeOut(1500);
       });
     });
-  });
-
-  // Make profile fields editable.
-  $(".editable").editable(function(value, settings) {
-    self._editableHandler($(this).attr("id"), value);
-    return value;
   });
 };
 
@@ -434,6 +421,18 @@ FirefeedUI.PostSparkView = Backbone.View.extend({
     // Initialize spark text area.
     $("#spark-button").css("visibility", "hidden");
     $("#c-count").text(this._limit);
+
+    // Make profile fields editable.
+    $(".editable").editable(function(value, settings) {
+      var id = $(this).attr("id");
+      if (id == "inputLocation") {
+        Backbone.trigger("firefeed:profile", "location", value);
+      }
+      if (id == "inputBio") {
+        Backbone.trigger("firefeed:profile", "bio", value);
+      }
+      return value;
+    });
   },
   textHandler: function(e) {
     var button = $("#spark-button");
