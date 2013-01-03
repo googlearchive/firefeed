@@ -85,7 +85,7 @@ FirefeedUI.prototype._setupHandlers = function() {
       });
 
       var view = new FirefeedUI.TimelineView({
-        model: new FirefeedUI.User(info), collection: userFeed
+        model: new FirefeedUI.User(info), collection: userFeed, limit: self._limit
       });
       self._showView(view);
     },
@@ -447,13 +447,41 @@ FirefeedUI.HomeView = Backbone.View.extend({
 
 FirefeedUI.TimelineView = Backbone.View.extend({
   el: $("#inner-body"),
+  initialize: function(options) {
+    this._limit = options.limit;
+  },
+  events: {
+    "blur #spark-input": "textHandler",
+    "keyup #spark-input": "textHandler"
+  },
   render: function() {
     var template = _.template($("#tmpl-timeline-content").html());
     this.$el.html(template(this.model.toJSON()));
+
+    // Initialize spark text area.
+    $("#spark-button").css("visibility", "hidden");
+    $("#c-count").text(this._limit);
+
+    // Setup user feed.
     this._userFeedView = new FirefeedUI.FeedView({
       collection: this.collection, el: $("#spark-timeline-list")
     });
     this._userFeedView.render();
+  },
+  textHandler: function(e) {
+    var button = $("#spark-button");
+    var charCount = $("#c-count");
+    var text = $(e.target).val();
+    charCount.text("" + (this._limit - text.length));
+    if (text.length > this._limit) {
+      charCount.css("color", "#FF6347");
+      button.css("visibility", "hidden");
+    } else if (text.length == 0) {
+      button.css("visibility", "hidden");
+    } else {
+      charCount.css("color", "#999");
+      button.css("visibility", "visible");
+    }
   },
   onClose: function() {
     this._userFeedView.close();
