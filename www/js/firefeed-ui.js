@@ -28,14 +28,18 @@ FirefeedUI.prototype._setupHandlers = function() {
 
   // Global feed of all user's sparks.
   var globalFeed = new FirefeedUI.Feed();
-  self._firefeed.onNewSparkFrom(5, function(sparkId, spark) {
-    spark.sparkId = sparkId;
-    spark.content = spark.content.substring(0, self._limit);
-    spark.friendlyTimestamp = self._formatDate(new Date(spark.timestamp || 0));
-    
-    var sparkModel = new FirefeedUI.Spark(spark);
-    sparkList[sparkId] = sparkModel;
+  self._firefeed.onNewSparkFrom(5, function(sparkObj) {
+    // Create an empty Spark model first.
+    var sparkModel = new FirefeedUI.Spark({sparkId: sparkObj.id});
+    sparkList[sparkObj.id] = sparkModel;
     globalFeed.add(sparkModel);
+
+    // Keep it updated when the values change.
+    sparkObj.onValue = function(spark) {
+      spark.content = spark.content.substring(0, self._limit);
+      spark.friendlyTimestamp = self._formatDate(new Date(spark.timestamp || 0));
+      sparkModel.set(spark);
+    }
   }, function(id) {
     globalFeed.remove(sparkList[id]);
     delete sparkList[id];
@@ -181,13 +185,16 @@ FirefeedUI.prototype.renderTimeline = function() {
   // Render body.
   var sparkList = {};
   var userFeed = new FirefeedUI.Feed();
-  self._firefeed.onNewSpark(10, function(sparkId, spark) {
-    spark.sparkId = sparkId;
-    spark.content = spark.content.substring(0, self._limit);
-    spark.friendlyTimestamp = self._formatDate(new Date(spark.timestamp || 0));
-    var sparkModel = new FirefeedUI.Spark(spark);
-    sparkList[sparkId] = sparkModel;
+  self._firefeed.onNewSpark(10, function(sparkObj) {
+    var sparkModel = new FirefeedUI.Spark({sparkId: sparkObj.id});
+    sparkList[sparkObj.id] = sparkModel;
     userFeed.add(sparkModel);
+
+    sparkObj.onValue = function(spark) {
+      spark.content = spark.content.substring(0, self._limit);
+      spark.friendlyTimestamp = self._formatDate(new Date(spark.timestamp || 0));
+      sparkModel.set(spark);
+    }
   }, function(id) {
     userFeed.remove(sparkList[id]);
     delete sparkList[id];
@@ -336,6 +343,9 @@ FirefeedUI.Feed = Backbone.Collection.extend({
 /* Backbone Views */
 FirefeedUI.SparkView = Backbone.View.extend({
   tagName: "li",
+  initialize: function() {
+    this.listenTo(this.model, "change", this.update);
+  },
   render: function() {
     this.$el.html(_.template($("#tmpl-spark").html())(this.model.toJSON()));
     return this;
@@ -347,6 +357,12 @@ FirefeedUI.SparkView = Backbone.View.extend({
         self.remove();
       });
     }, 100);
+  },
+  update: function() {
+    this.render();
+    if (!this.$el.is(":visible")) {
+      this.$el.slideDown("slow");
+    }
   }
 });
 
@@ -358,13 +374,15 @@ FirefeedUI.FeedView = Backbone.View.extend({
     this.listenTo(this.collection, "remove", this.removeSpark);
   },
   addSpark: function(spark) {
+    if (!spark) {
+      return;
+    }
     var id = spark.get("sparkId");
     var view = new FirefeedUI.SparkView({model: spark, id: "spark-" + id});
     this._sparks[id] = view;
-
-    var sparkEl = view.render().$el;
-    this.$el.prepend(sparkEl.hide());
-    sparkEl.slideDown("slow");
+    // Add the spark but keep it hidden. The SparkView will show itself
+    // when there's data.
+    this.$el.prepend(view.$el.hide());
   },
   removeSpark: function(spark) {
     var id = spark.get("sparkId");
