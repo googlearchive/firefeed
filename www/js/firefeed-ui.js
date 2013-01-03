@@ -24,14 +24,14 @@ function FirefeedUI() {
 FirefeedUI.prototype._setupHandlers = function() {
   // Setup collections.
   var self = this;
-  var sparkList = {};
+  var globalSparkList = {};
 
   // Global feed of all user's sparks.
   var globalFeed = new FirefeedUI.Feed();
   self._firefeed.onNewSparkFrom(5, function(sparkObj) {
     // Create an empty Spark model first.
     var sparkModel = new FirefeedUI.Spark({sparkId: sparkObj.id});
-    sparkList[sparkObj.id] = sparkModel;
+    globalSparkList[sparkObj.id] = sparkModel;
     globalFeed.add(sparkModel);
 
     // Keep it updated when the values change.
@@ -41,9 +41,13 @@ FirefeedUI.prototype._setupHandlers = function() {
       sparkModel.set(spark);
     }
   }, function(id) {
-    globalFeed.remove(sparkList[id]);
-    delete sparkList[id];
+    globalFeed.remove(globalSparkList[id]);
+    delete globalSparkList[id];
   });
+
+  // Feed of all user's sparks.
+  var userSparkList = {};
+  var userFeed = new FirefeedUI.Feed();
 
   // Setup routes.
   var self = this;
@@ -55,7 +59,35 @@ FirefeedUI.prototype._setupHandlers = function() {
       "*splat": "home"
     },
     timeline: function() {
-      self.renderTimeline();
+      if (!self._loggedIn) {
+        self._router.navigate("home", {trigger: true});
+        return;
+      }
+
+      // Get user info.
+      var info = self._loggedIn;
+      info.location = info.location || "Your Location...";
+      info.bio = info.bio || "Your Bio...";
+
+      // Setup user feed. XXX: Do this only once, on login.
+      self._firefeed.onNewSpark(10, function(sparkObj) {
+        var sparkModel = new FirefeedUI.Spark({sparkId: sparkObj.id});
+        userSparkList[sparkObj.id] = sparkModel;
+        userFeed.add(sparkModel);
+        sparkObj.onValue = function(spark) {
+          spark.content = spark.content.substring(0, self._limit);
+          spark.friendlyTimestamp = self._formatDate(new Date(spark.timestamp || 0));
+          sparkModel.set(spark);
+        }
+      }, function(id) {
+        userFeed.remove(userSparkList[id]);
+        delete userSparkList[id];
+      });
+
+      var view = new FirefeedUI.TimelineView({
+        model: new FirefeedUI.User(info), collection: userFeed
+      });
+      self._showView(view);
     },
     profile: function(id) {
       self.renderProfile(id);
@@ -88,10 +120,22 @@ FirefeedUI.prototype._showView = function(view, isHome) {
     this._currentView.body.close();
     this._currentView.header.close();
   }
+
   this._currentView = {
     body: view,
     header: new FirefeedUI.HeaderView({_isHome: isHome})
   };
+
+  var self = this;
+  this._currentView.header.on("firefeed:home", function() {
+    self._router.navigate("home", {trigger: true});
+  });
+  this._currentView.header.on("firefeed:logout", function() {
+    self._firefeed.logout();
+    self._loggedIn = false;
+    self._router.navigate("home", {trigger: true});
+  });
+
   this._currentView.header.render();
   this._currentView.body.render();
 };
@@ -145,84 +189,14 @@ FirefeedUI.prototype._editableHandler = function(id, value) {
   return true;
 }
 
-FirefeedUI.prototype.logout = function(e) {
-  if (e) {
-    e.preventDefault();
-  }
-  this._firefeed.logout();
-  this._loggedIn = false;
-  this._router.navigate("home", {trigger: true});
-};
-
 FirefeedUI.prototype.render404 = function() {
   // TODO: Add 404 page.
   this._router.navigate("404", {trigger: true});
 };
 
-FirefeedUI.prototype.goHome = function() {
-  this._router.navigate("timeline", {trigger: true});
-};
-
 FirefeedUI.prototype.renderTimeline = function() {
   var self = this;
 
-  if (!self._loggedIn) {
-    self._router.navigate("home", {trigger: true});
-    return;
-  }
-
-  var info = self._loggedIn;
-  $("#header").html(_.template(
-    $("#tmpl-header-content").html(), {homePage: false}
-  ));
-  $("#top-logo").click(this.goHome.bind(this));
-  $("#logout-button").click(this.logout.bind(this));
-
-  // Render placeholders for location / bio if not filled in.
-  info.location = info.location || "Your Location...";
-  info.bio = info.bio || "Your Bio...";
-
-  // Render body.
-  var sparkList = {};
-  var userFeed = new FirefeedUI.Feed();
-  self._firefeed.onNewSpark(10, function(sparkObj) {
-    var sparkModel = new FirefeedUI.Spark({sparkId: sparkObj.id});
-    sparkList[sparkObj.id] = sparkModel;
-    userFeed.add(sparkModel);
-
-    sparkObj.onValue = function(spark) {
-      spark.content = spark.content.substring(0, self._limit);
-      spark.friendlyTimestamp = self._formatDate(new Date(spark.timestamp || 0));
-      sparkModel.set(spark);
-    }
-  }, function(id) {
-    userFeed.remove(sparkList[id]);
-    delete sparkList[id];
-  });
-  new FirefeedUI.TimelineView({
-    model: new FirefeedUI.User(info), collection: userFeed
-  }).render();
-
-  // Attach textarea handlers.
-  var charCount = $("#c-count");
-  var sparkText = $("#spark-input");
-  $("#spark-button").css("visibility", "hidden");
-  function _textAreaHandler() {
-    var text = sparkText.val();
-    charCount.text("" + (self._limit - text.length));
-    if (text.length > self._limit) {
-      charCount.css("color", "#FF6347");
-      $("#spark-button").css("visibility", "hidden");
-    } else if (text.length == 0) {
-      $("#spark-button").css("visibility", "hidden");
-    } else {
-      charCount.css("color", "#999");
-      $("#spark-button").css("visibility", "visible");
-    }
-  }
-  charCount.text(self._limit);
-  sparkText.keyup(_textAreaHandler);
-  sparkText.blur(_textAreaHandler);
 
   // Attach post spark button.
   $("#spark-button").click(self._postHandler.bind(self));
@@ -412,7 +386,14 @@ FirefeedUI.HeaderView = Backbone.View.extend({
       this._curlPath = "img/curl-animate.gif";
       var img = new Image();
       img.src = this._curlPath;
-      return { "hover .ribbon-curl > img": "curl" };
+      return {
+        "hover .ribbon-curl > img": "curl"
+      };
+    } else {
+      return {
+        "click #top-logo": "home",
+        "click #logout-button": "logout"
+      }
     }
   },
   curl: function(e) {
@@ -421,6 +402,14 @@ FirefeedUI.HeaderView = Backbone.View.extend({
     } else {
       $(e.target).attr("src", "img/curl-static.gif");
     }
+  },
+  home: function(e) {
+    e.preventDefault();
+    this.trigger("firefeed:home");
+  },
+  logout: function(e) {
+    e.preventDefault();
+    this.trigger("firefeed:logout");
   }
 });
 
