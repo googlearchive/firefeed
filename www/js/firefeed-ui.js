@@ -45,7 +45,7 @@ FirefeedUI.prototype._setupHandlers = function() {
     delete globalSparkList[id];
   });
 
-  // Feed of all user's sparks.
+  // Current user's feed.
   var userSparkList = {};
   var userFeed = new FirefeedUI.Feed();
 
@@ -102,7 +102,32 @@ FirefeedUI.prototype._setupHandlers = function() {
       self._showView(view);
     },
     profile: function(id) {
-      self.renderProfile(id);
+      // Get sparks for profile. XXX: Do this only once.
+      var profileSparkList = {};
+      var profileFeed = new FirefeedUI.Feed();
+      self._firefeed.onNewSparkFrom(5, function(sparkObj) {
+        var sparkModel = new FirefeedUI.Spark({sparkId: sparkObj.id});
+        profileSparkList[sparkObj.id] = sparkModel;
+        profileFeed.add(sparkModel);
+        sparkObj.onValue = function(spark) {
+          spark.content = spark.content.substring(0, self._limit);
+          spark.friendlyTimestamp = self._formatDate(new Date(spark.timestamp || 0));
+          sparkModel.set(spark);
+        }
+      }, function(sparkId) {
+        profileFeed.remove(profileSparkList[sparkId]);
+        delete profileSparkList[id];
+      }, id);
+
+      // Get user info and kick off view. TODO: Refactor this.
+      self._firefeed.getUserInfo(id, function(info) {
+        info.id = id;
+        var view = new FirefeedUI.ProfileView({
+          model: new FirefeedUI.User(info),
+          collection: profileFeed
+        });
+        self._showView(view);
+      });
     },
     spark: function(id) {
       self.renderSpark(id);
@@ -135,7 +160,7 @@ FirefeedUI.prototype._showView = function(view, isHome) {
 
   this._currentView = {
     body: view,
-    header: new FirefeedUI.HeaderView({_isHome: isHome})
+    header: new FirefeedUI.HeaderView({_isHome: isHome, _user: this._loggedIn})
   };
 
   var self = this;
@@ -160,67 +185,6 @@ FirefeedUI.prototype._formatDate = function(date) {
     localeDate = localeDate.substr(0, gmtIndex);
   }
   return localeDate;
-};
-
-FirefeedUI.prototype.renderTimeline = function() {
-  var self = this;
-
-  // Get some "suggested" users.
-  self._firefeed.getSuggestedUsers(function(userid, info) {
-    info.id = userid;
-    $(_.template($("#tmpl-suggested-user").html(), info)).
-      appendTo("#suggested-users");
-    var button = $("#followBtn-" + userid);
-    // Fade out the suggested user if they were followed successfully.
-    button.click(function(e) {
-      e.preventDefault();
-      button.remove();
-      self._firefeed.follow(userid, function(err, done) {
-        // TODO FIXME: Check for errors!
-        $("#followBox-" + userid).fadeOut(1500);
-      });
-    });
-  });
-};
-
-FirefeedUI.prototype.renderProfile = function(uid) {
-  var self = this;
-  $("#header").html(_.template(
-    $("#tmpl-header-content").html(), {homePage: false}
-  ));
-  $("#top-logo").click(this.goHome.bind(this));
-  if (self._loggedIn) {
-    $("#logout-button").click(self.logout.bind(self));
-  } else {
-    $("#logout-button").remove();
-  }
-
-  // Render profile page body.
-  $("#inner-body").html(_.template($("#tmpl-profile-body").html()));
-
-  // Update user info.
-  self._firefeed.getUserInfo(uid, function(info) {
-    info.id = uid;
-    var content = _.template($("#tmpl-profile-content").html(), info);
-    $("#profile-content").html(content);
-    var button = $("#followBtn-" + info.id);
-
-    // Show follow button if logged in.
-    if (self._loggedIn && self._loggedIn != info.id) {
-      button.click(function(e) {
-        e.preventDefault();
-        self._firefeed.follow(info.id, function(err, done) {
-          // TODO FIXME: Check for errors!
-          $("#followBtn-" + info.id).fadeOut(1500);
-        });
-      });
-    } else {
-      button.hide();
-    }
-  });
-
-  // Render this user's tweets.
-  //new FeedView({model: new Feed(5, uid), el: $("#spark-profile-list")});
 };
 
 FirefeedUI.prototype.renderSpark = function(id) {
@@ -331,12 +295,17 @@ FirefeedUI.FeedView = Backbone.View.extend({
 FirefeedUI.HeaderView = Backbone.View.extend({
   el: $("#header"),
   initialize: function(options) {
+    this._user = options._user;
     this._isHome = options._isHome;
   },
   render: function() {
     this.$el.html(_.template(
       $("#tmpl-header-content").html(), {homePage: this._isHome}
     ));
+    // Hide logout button if user is not logged in.
+    if (!this._user) {
+      $("#logout-button").hide();
+    }
   },
   events: function() {
     if (this._isHome) {
@@ -506,5 +475,24 @@ FirefeedUI.TimelineView = Backbone.View.extend({
   onClose: function() {
     this._userFeedView.close();
     this._postSparkView.close();
+  }
+});
+
+FirefeedUI.ProfileView = Backbone.View.extend({
+  el: $("#inner-body"),
+  render: function() {
+    this.$el.html(_.template($("#tmpl-profile-body").html()));
+
+    var content = _.template($("#tmpl-profile-content").html())(this.model.toJSON());
+    $("#profile-content").html(content);
+
+    // Render this user's sparks.
+    this._profileFeedView = new FirefeedUI.FeedView({
+      collection: this.collection, el: $("#spark-profile-list")
+    });
+    this._profileFeedView.render();
+  },
+  onClose: function() {
+    this._profileFeedView.close();
   }
 });
