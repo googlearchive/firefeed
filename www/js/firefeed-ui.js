@@ -9,6 +9,9 @@ function FirefeedUI() {
   this._limit = 141;
   this._router = null;
   this._loggedIn = false;
+
+  this._feeds = {};
+  this._userFeed = null;
   this._firefeed = new Firefeed("https://firefeed.firebaseio-staging.com/");
 
   // Figure out if the user is logged in or not, with silent login.
@@ -25,30 +28,6 @@ function FirefeedUI() {
 FirefeedUI.prototype._setupHandlers = function() {
   // Setup collections.
   var self = this;
-  var globalSparkList = {};
-
-  // Global feed of all user's sparks.
-  var globalFeed = new FirefeedUI.Feed();
-  self._firefeed.onNewSparkFrom(5, function(sparkObj) {
-    // Create an empty Spark model first.
-    var sparkModel = new FirefeedUI.Spark({sparkId: sparkObj.id});
-    globalSparkList[sparkObj.id] = sparkModel;
-    globalFeed.add(sparkModel);
-
-    // Keep it updated when the values change.
-    sparkObj.onValue = function(spark) {
-      spark.content = spark.content.substring(0, self._limit);
-      spark.friendlyTimestamp = self._formatDate(new Date(spark.timestamp || 0));
-      sparkModel.set(spark);
-    }
-  }, function(id) {
-    globalFeed.remove(globalSparkList[id]);
-    delete globalSparkList[id];
-  });
-
-  // Current user's feed.
-  var userSparkList = {};
-  var userFeed = new FirefeedUI.Feed();
 
   // Setup routes.
   var self = this;
@@ -70,23 +49,9 @@ FirefeedUI.prototype._setupHandlers = function() {
       info.location = info.location || "Your Location...";
       info.bio = info.bio || "Your Bio...";
 
-      // Setup user feed. XXX: Do this only once, on login.
-      self._firefeed.onNewSpark(10, function(sparkObj) {
-        var sparkModel = new FirefeedUI.Spark({sparkId: sparkObj.id});
-        userSparkList[sparkObj.id] = sparkModel;
-        userFeed.add(sparkModel);
-        sparkObj.onValue = function(spark) {
-          spark.content = spark.content.substring(0, self._limit);
-          spark.friendlyTimestamp = self._formatDate(new Date(spark.timestamp || 0));
-          sparkModel.set(spark);
-        }
-      }, function(id) {
-        userFeed.remove(userSparkList[id]);
-        delete userSparkList[id];
-      });
-
       var view = new FirefeedUI.TimelineView({
-        model: new FirefeedUI.User(info), collection: userFeed, limit: self._limit
+        model: new FirefeedUI.User(info), collection: self._getUserFeed(),
+        limit: self._limit
       });
       Backbone.on("firefeed:post", function(post) {
         self._firefeed.post(post, function(err, done) {
@@ -103,29 +68,12 @@ FirefeedUI.prototype._setupHandlers = function() {
       self._showView(view);
     },
     profile: function(id) {
-      // Get sparks for profile. XXX: Do this only once.
-      var profileSparkList = {};
-      var profileFeed = new FirefeedUI.Feed();
-      self._firefeed.onNewSparkFrom(5, function(sparkObj) {
-        var sparkModel = new FirefeedUI.Spark({sparkId: sparkObj.id});
-        profileSparkList[sparkObj.id] = sparkModel;
-        profileFeed.add(sparkModel);
-        sparkObj.onValue = function(spark) {
-          spark.content = spark.content.substring(0, self._limit);
-          spark.friendlyTimestamp = self._formatDate(new Date(spark.timestamp || 0));
-          sparkModel.set(spark);
-        }
-      }, function(sparkId) {
-        profileFeed.remove(profileSparkList[sparkId]);
-        delete profileSparkList[id];
-      }, id);
-
       // Get user info and kick off view. TODO: Refactor this.
       self._firefeed.getUserInfo(id, function(info) {
         info.id = id;
         var view = new FirefeedUI.ProfileView({
           model: new FirefeedUI.User(info),
-          collection: profileFeed
+          collection: self._getFeed(id)
         });
         self._showView(view);
       });
@@ -150,7 +98,7 @@ FirefeedUI.prototype._setupHandlers = function() {
       });
     },
     home: function() {
-      var view = new FirefeedUI.HomeView({collection: globalFeed});
+      var view = new FirefeedUI.HomeView({collection: self._getFeed()});
       Backbone.on("firefeed:login", function() {
         self._firefeed.login(false, function(err, info) {
           if (err) {
@@ -168,6 +116,60 @@ FirefeedUI.prototype._setupHandlers = function() {
   this._router = new mainRouter();
   Backbone.history.start();
 };
+
+FirefeedUI.prototype._getFeed = function(uid) {
+  if (this._feeds[uid]) {
+    return this._feeds[uid];
+  }
+
+  var self = this;
+  var sparkList = {};
+  var userFeed = new FirefeedUI.Feed();
+  self._firefeed.onNewSparkFrom(5, function(sparkObj) {
+    // Create an empty Spark model first.
+    var sparkModel = new FirefeedUI.Spark({sparkId: sparkObj.id});
+    sparkList[sparkObj.id] = sparkModel;
+    userFeed.add(sparkModel);
+
+    // Keep it updated when the values change.
+    sparkObj.onValue = function(spark) {
+      spark.content = spark.content.substring(0, self._limit);
+      spark.friendlyTimestamp = self._formatDate(new Date(spark.timestamp || 0));
+      sparkModel.set(spark);
+    }
+  }, function(id) {
+    userFeed.remove(sparkList[id]);
+    delete sparkList[id];
+  }, uid);
+
+  return this._feeds[uid] = userFeed;
+};
+
+FirefeedUI.prototype._getUserFeed = function() {
+  if (this._userFeed) {
+    return this._userFeed;
+  }
+
+  // Create user feed.
+  var self = this;
+  var userSparkList = {};
+  var userFeed = new FirefeedUI.Feed();
+  self._firefeed.onNewSpark(10, function(sparkObj) {
+    var sparkModel = new FirefeedUI.Spark({sparkId: sparkObj.id});
+    userSparkList[sparkObj.id] = sparkModel;
+    userFeed.add(sparkModel);
+    sparkObj.onValue = function(spark) {
+      spark.content = spark.content.substring(0, self._limit);
+      spark.friendlyTimestamp = self._formatDate(new Date(spark.timestamp || 0));
+      sparkModel.set(spark);
+    }
+  }, function(id) {
+    userFeed.remove(userSparkList[id]);
+    delete userSparkList[id];
+  });
+
+  return this._userFeed = userFeed;
+}
 
 FirefeedUI.prototype._showView = function(view, isHome) {
   if (this._currentView) {
