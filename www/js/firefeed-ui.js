@@ -87,12 +87,12 @@ FirefeedUI.prototype._setupHandlers = function() {
       var view = new FirefeedUI.TimelineView({
         model: new FirefeedUI.User(info), collection: userFeed, limit: self._limit
       });
-      view.on("firefeed:post", function(post) {
+      Backbone.on("firefeed:post", function(post) {
         self._firefeed.post(post, function(err, done) {
           if (err) {
-            view.trigger("firefeed:post:failed");
+            Backbone.trigger("firefeed:post:failed");
           } else {
-            view.trigger("firefeed:post:success"); 
+            Backbone.trigger("firefeed:post:success"); 
           }
         });
       });
@@ -106,10 +106,10 @@ FirefeedUI.prototype._setupHandlers = function() {
     },
     home: function() {
       var view = new FirefeedUI.HomeView({collection: globalFeed});
-      view.on("firefeed:login", function() {
+      Backbone.on("firefeed:login", function() {
         self._firefeed.login(false, function(err, info) {
           if (err) {
-            view.trigger("firefeed:login:failed");
+            Backbone.trigger("firefeed:login:failed");
           } else {
             self._loggedIn = info;
             self._router.navigate("timeline", {trigger: true});
@@ -136,10 +136,10 @@ FirefeedUI.prototype._showView = function(view, isHome) {
   };
 
   var self = this;
-  this._currentView.header.on("firefeed:home", function() {
+  Backbone.on("firefeed:home", function() {
     self._router.navigate("home", {trigger: true});
   });
-  this._currentView.header.on("firefeed:logout", function() {
+  Backbone.on("firefeed:logout", function() {
     self._firefeed.logout();
     self._loggedIn = false;
     self._router.navigate("home", {trigger: true});
@@ -376,11 +376,11 @@ FirefeedUI.HeaderView = Backbone.View.extend({
   },
   home: function(e) {
     e.preventDefault();
-    this.trigger("firefeed:home");
+    Backbone.trigger("firefeed:home");
   },
   logout: function(e) {
     e.preventDefault();
-    this.trigger("firefeed:logout");
+    Backbone.trigger("firefeed:logout");
   }
 });
 
@@ -393,7 +393,7 @@ FirefeedUI.HomeView = Backbone.View.extend({
     this.$el.html($("#tmpl-index-content").html());
     this._spinner = new Spinner();
     this._button = $("#login-button");
-    this.on("firefeed:login:failed", this.loginFailed);
+    Backbone.on("firefeed:login:failed", this.loginFailed);
     this._globalFeedView = new FirefeedUI.FeedView({
       collection: this.collection, el: $("#spark-index-list")
     });
@@ -403,7 +403,7 @@ FirefeedUI.HomeView = Backbone.View.extend({
     e.preventDefault();
     this._button.hide();
     this._spinner.spin($("#login-div").get(0));
-    this.trigger("firefeed:login");
+    Backbone.trigger("firefeed:login");
   },
   loginFailed: function() {
     this._spinner.stop();
@@ -416,12 +416,11 @@ FirefeedUI.HomeView = Backbone.View.extend({
   }
 });
 
-FirefeedUI.TimelineView = Backbone.View.extend({
-  el: $("#inner-body"),
+FirefeedUI.PostSparkView = Backbone.View.extend({
   initialize: function(options) {
     this._limit = options.limit;
-    this.on("firefeed:post:failed", this.onPostFailed);
-    this.on("firefeed:post:success", this.onPostSuccess);
+    this.listenTo(Backbone, "firefeed:post:failed", this.onPostFailed);
+    this.listenTo(Backbone, "firefeed:post:success", this.onPostSuccess);
   },
   events: {
     "blur #spark-input": "textHandler",
@@ -429,18 +428,12 @@ FirefeedUI.TimelineView = Backbone.View.extend({
     "click #spark-button": "postHandler"
   },
   render: function() {
-    var template = _.template($("#tmpl-timeline-content").html());
-    this.$el.html(template(this.model.toJSON()));
+    // Put user info.
+    this.$el.html(_.template($("#tmpl-post-spark").html())(this.model.toJSON()));
 
     // Initialize spark text area.
     $("#spark-button").css("visibility", "hidden");
     $("#c-count").text(this._limit);
-
-    // Setup user feed.
-    this._userFeedView = new FirefeedUI.FeedView({
-      collection: this.collection, el: $("#spark-timeline-list")
-    });
-    this._userFeedView.render();
   },
   textHandler: function(e) {
     var button = $("#spark-button");
@@ -467,7 +460,7 @@ FirefeedUI.TimelineView = Backbone.View.extend({
     this._spinner = new Spinner();
     this._spinner.spin($("#spark-button-div").get(0));
 
-    this.trigger("firefeed:post", $("#spark-input").val());
+    Backbone.trigger("firefeed:post", $("#spark-input").val());
   },
   onPostFailed: function() {
     this._message.html("Posting failed!").css("background", "#FF6347");
@@ -488,8 +481,31 @@ FirefeedUI.TimelineView = Backbone.View.extend({
       self._message.replaceWith(self._sparkButton);
       self._sparkButton.click(self.postHandler.bind(self));
     });
+  }
+});
+
+FirefeedUI.TimelineView = Backbone.View.extend({
+  el: $("#inner-body"),
+  initialize: function(options) {
+    this._limit = options.limit;
+  },
+  render: function() {
+    this.$el.html(_.template($("#tmpl-timeline-content").html())());
+
+    // Setup user feed.
+    this._userFeedView = new FirefeedUI.FeedView({
+      collection: this.collection, el: $("#spark-timeline-list")
+    });
+    this._userFeedView.render();
+
+    // Setup post spark area.
+    this._postSparkView = new FirefeedUI.PostSparkView({
+      model: this.model, limit: this._limit, el: $("#post-spark")
+    });
+    this._postSparkView.render();
   },
   onClose: function() {
     this._userFeedView.close();
+    this._postSparkView.close();
   }
 });

@@ -110,33 +110,8 @@
 
     <script id="tmpl-timeline-content" type="text/template">
       <div class="third">
-        <div class="media">
-          <div class="img avatar">
-            <a id="<%- id %>" href="#profile/<%- id %>">
-              <img src="<%- pic %>" alt="<%- name %>"></a>
-          </div>
-          <div class="body">
-            <h2 class="end">
-              <a id="<%- id %>" href="#profile/<%- id %>"><%- name %></a>
-            </h2>
-            <div class="big-copy end">
-              <div class="editable" id="inputLocation"><%- location %></div>
-            </div>
-            <div class="big-copy">
-              <div class="editable" id="inputBio"><%- bio %></div>
-            </div>
-          </div>
-        </div>
-        <div class="field">
-          <textarea id="spark-input" class="text" rows="4" cols="10" placeholder="Share an update"></textarea>
-        </div>
-        <small class="field-help"><span id="c-count"></span> characters remaining</small>
-        <div id="spark-button-div">
-          <a id="spark-button" href="#" class="btn default full pushv4">Update Status</a>
-        </div>
-        
+        <div id="post-spark"></div>
         <div class="separator pushv4"></div>
-        
         <div id="suggested-users">
           <h3>We suggest you follow:</h3>
         </div>
@@ -144,6 +119,33 @@
       <div class="twothird">
         <ul id="spark-timeline-list" class="item-list">
         </ul>
+      </div>
+    </script>
+
+    <script id="tmpl-post-spark" type="text/template">
+      <div class="media">
+        <div class="img avatar">
+          <a id="<%- id %>" href="#profile/<%- id %>">
+            <img src="<%- pic %>" alt="<%- name %>"></a>
+        </div>
+        <div class="body">
+          <h2 class="end">
+            <a id="<%- id %>" href="#profile/<%- id %>"><%- name %></a>
+          </h2>
+          <div class="big-copy end">
+            <div class="editable" id="inputLocation"><%- location %></div>
+          </div>
+          <div class="big-copy">
+            <div class="editable" id="inputBio"><%- bio %></div>
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <textarea id="spark-input" class="text" rows="4" cols="10" placeholder="Share an update"></textarea>
+      </div>
+      <small class="field-help"><span id="c-count"></span> characters remaining</small>
+      <div id="spark-button-div">
+        <a id="spark-button" href="#" class="btn default full pushv4">Update Status</a>
       </div>
     </script>
 
