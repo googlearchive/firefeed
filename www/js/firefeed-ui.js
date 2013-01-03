@@ -21,6 +21,7 @@ function FirefeedUI() {
   });
 }
 
+/* This function is needs refactoring BIGTIME */
 FirefeedUI.prototype._setupHandlers = function() {
   // Setup collections.
   var self = this;
@@ -130,7 +131,23 @@ FirefeedUI.prototype._setupHandlers = function() {
       });
     },
     spark: function(id) {
-      self.renderSpark(id);
+      self._firefeed.getSpark(id, function(spark) {
+        if (spark !== null && spark.author) {
+          self._firefeed.getUserInfo(spark.author, function(authorInfo) {
+            for (var key in authorInfo) {
+              spark[key] = authorInfo[key];
+            }
+            spark.content = spark.content.substring(0, self._limit);
+            spark.friendlyTimestamp = self._formatDate(
+              new Date(spark.timestamp || 0)
+            );
+            var view = new FirefeedUI.BigSparkView({
+              model: new FirefeedUI.BigSpark(spark)
+            });
+            self._showView(view);
+          });
+        }
+      });
     },
     home: function() {
       var view = new FirefeedUI.HomeView({collection: globalFeed});
@@ -187,32 +204,6 @@ FirefeedUI.prototype._formatDate = function(date) {
   return localeDate;
 };
 
-FirefeedUI.prototype.renderSpark = function(id) {
-  $("#header").html(_.template(
-    $("#tmpl-header-content").html(), {homePage: false}
-  ));
-  $("#top-logo").click(this.goHome.bind(this));
-  $("#logout-button").click(this.logout.bind(this));
-
-  // Render spark page body.
-  var self = this;
-  self._firefeed.getSpark(id, function(spark) {
-    if (spark !== null && spark.author) {
-      self._firefeed.getUserInfo(spark.author, function(authorInfo) {
-        for (var key in authorInfo) {
-          spark[key] = authorInfo[key];
-        }
-        spark.content = spark.content.substring(0, self._limit);
-        spark.friendlyTimestamp = self._formatDate(
-          new Date(spark.timestamp || 0)
-        );
-        var content = _.template($("#tmpl-spark-content").html(), spark);
-        $("#innerBody").html(content);
-      });
-    }
-  });
-};
-
 /* Convenience close method to clean up views */
 Backbone.View.prototype.close = function() {
   this.remove();
@@ -226,6 +217,8 @@ Backbone.View.prototype.close = function() {
 FirefeedUI.User = Backbone.Model.extend({
 });
 FirefeedUI.Spark = Backbone.Model.extend({
+});
+FirefeedUI.BigSpark = Backbone.Model.extend({
 });
 
 /* Backbone Collections */
@@ -494,5 +487,13 @@ FirefeedUI.ProfileView = Backbone.View.extend({
   },
   onClose: function() {
     this._profileFeedView.close();
+  }
+});
+
+FirefeedUI.BigSparkView = Backbone.View.extend({
+  el: $("#inner-body"),
+  render: function() {
+    var content = _.template($("#tmpl-spark-content").html())(this.model.toJSON());
+    this.$el.html(content);
   }
 });
