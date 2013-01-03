@@ -45,26 +45,24 @@ FirefeedUI.prototype._setupHandlers = function() {
         return;
       }
 
-      // Get user info.
+      // Get user info. TODO: Make this a model.
       var info = self._loggedIn;
       info.location = info.location || "Your Location...";
       info.bio = info.bio || "Your Bio...";
 
-      var view = new FirefeedUI.TimelineView({
+      self._showView(FirefeedUI.TimelineView, {
         model: new FirefeedUI.User(info), collection: self._getUserFeed(),
         limit: self._limit
       });
-      self._showView(view);
     },
     profile: function(id) {
       // Get user info and kick off view. TODO: Refactor this.
       self._firefeed.getUserInfo(id, function(info) {
         info.id = id;
-        var view = new FirefeedUI.ProfileView({
+        self._showView(FirefeedUI.ProfileView, {
           model: new FirefeedUI.User(info),
           collection: self._getFeed(id)
         });
-        self._showView(view);
       });
     },
     spark: function(id) {
@@ -78,17 +76,15 @@ FirefeedUI.prototype._setupHandlers = function() {
             spark.friendlyTimestamp = self._formatDate(
               new Date(spark.timestamp || 0)
             );
-            var view = new FirefeedUI.BigSparkView({
+            self._showView(FirefeedUI.BigSparkView, {
               model: new FirefeedUI.BigSpark(spark)
             });
-            self._showView(view);
           });
         }
       });
     },
     home: function() {
-      var view = new FirefeedUI.HomeView({collection: self._getFeed()});
-      self._showView(view, true);
+      self._showView(FirefeedUI.HomeView, {collection: self._getFeed()}, true);
     }
   });
 
@@ -184,18 +180,21 @@ FirefeedUI.prototype._getUserFeed = function() {
   return this._userFeed = userFeed;
 }
 
-FirefeedUI.prototype._showView = function(view, isHome) {
+FirefeedUI.prototype._showView = function(view, args, isHome) {
   if (this._currentView) {
     this._currentView.body.close();
     this._currentView.header.close();
   }
 
-  this._currentView = {
-    body: view,
-    header: new FirefeedUI.HeaderView({_isHome: isHome, _user: this._loggedIn})
-  };
-  this._currentView.header.render();
-  this._currentView.body.render();
+  $("#wrapper").prepend($("<header/>", {id: "header"}));
+  $("#body-wrapper").prepend($("<div/>", {id: "inner-body", class: "row"}));
+
+  args.el = $("#inner-body");
+  var body = new view(args);
+  var header = new FirefeedUI.HeaderView({
+    el: $("#header"), _isHome: isHome, _user: this._loggedIn
+  });
+  this._currentView = { body: body.render(), header: header.render() };
 };
 
 FirefeedUI.prototype._formatDate = function(date) {
@@ -237,10 +236,14 @@ FirefeedUI.Feed = Backbone.Collection.extend({
 FirefeedUI.SparkView = Backbone.View.extend({
   tagName: "li",
   initialize: function() {
-    this.listenTo(this.model, "change", this.update);
+    this.listenTo(this.model, "change", this.render);
   },
   render: function() {
-    this.$el.html(_.template($("#tmpl-spark").html())(this.model.toJSON()));
+    // Only render if there's data to show.
+    if (this.model.get("content") && !this.$el.is(":visible")) {
+      this.$el.html(_.template($("#tmpl-spark").html())(this.model.toJSON()));
+      this.$el.slideDown("slow");
+    }
     return this;
   },
   removeSelf: function() {
@@ -250,32 +253,23 @@ FirefeedUI.SparkView = Backbone.View.extend({
         self.remove();
       });
     }, 100);
-  },
-  update: function() {
-    this.render();
-    if (!this.$el.is(":visible")) {
-      this.$el.slideDown("slow");
-    }
   }
 });
 
 FirefeedUI.FeedView = Backbone.View.extend({
   initialize: function() {
     this._sparks = {};
-    _.forEach(this.collection, this.addSpark);
+    _.each(this.collection.models, this.addSpark, this);
     this.listenTo(this.collection, "add", this.addSpark);
     this.listenTo(this.collection, "remove", this.removeSpark);
   },
   addSpark: function(spark) {
-    if (!spark) {
-      return;
-    }
     var id = spark.get("sparkId");
     var view = new FirefeedUI.SparkView({model: spark, id: "spark-" + id});
-    this._sparks[id] = view;
     // Add the spark but keep it hidden. The SparkView will show itself
-    // when there's data.
+    // if there's data to show.
     this.$el.prepend(view.$el.hide());
+    this._sparks[id] = view.render();
   },
   removeSpark: function(spark) {
     var id = spark.get("sparkId");
@@ -290,10 +284,15 @@ FirefeedUI.FeedView = Backbone.View.extend({
 });
 
 FirefeedUI.HeaderView = Backbone.View.extend({
-  el: $("#header"),
   initialize: function(options) {
     this._user = options._user;
     this._isHome = options._isHome;
+    if (this._isHome) {
+      // Preload curl animation gif.
+      this._curlPath = "img/curl-animate.gif";
+      var img = new Image();
+      img.src = this._curlPath;
+    }
   },
   render: function() {
     this.$el.html(_.template(
@@ -303,13 +302,10 @@ FirefeedUI.HeaderView = Backbone.View.extend({
     if (!this._user) {
       $("#logout-button").hide();
     }
+    return this;
   },
   events: function() {
     if (this._isHome) {
-      // Preload curl animation gif.
-      this._curlPath = "img/curl-animate.gif";
-      var img = new Image();
-      img.src = this._curlPath;
       return {
         "hover .ribbon-curl > img": "curl"
       };
@@ -338,7 +334,6 @@ FirefeedUI.HeaderView = Backbone.View.extend({
 });
 
 FirefeedUI.HomeView = Backbone.View.extend({
-  el: $("#inner-body"),
   initialize: function() {
     this.listenTo(Backbone, "firefeed:login:failed", this.loginFailed);
   },
@@ -353,6 +348,7 @@ FirefeedUI.HomeView = Backbone.View.extend({
       collection: this.collection, el: $("#spark-index-list")
     });
     this._globalFeedView.render();
+    return this;
   },
   login: function(e) {
     e.preventDefault();
@@ -401,6 +397,7 @@ FirefeedUI.PostSparkView = Backbone.View.extend({
       }
       return value;
     });
+    return this;
   },
   textHandler: function(e) {
     var button = $("#spark-button");
@@ -452,7 +449,6 @@ FirefeedUI.PostSparkView = Backbone.View.extend({
 });
 
 FirefeedUI.TimelineView = Backbone.View.extend({
-  el: $("#inner-body"),
   initialize: function(options) {
     this._limit = options.limit;
   },
@@ -470,6 +466,7 @@ FirefeedUI.TimelineView = Backbone.View.extend({
       model: this.model, limit: this._limit, el: $("#post-spark")
     });
     this._postSparkView.render();
+    return this;
   },
   onClose: function() {
     this._userFeedView.close();
@@ -478,7 +475,6 @@ FirefeedUI.TimelineView = Backbone.View.extend({
 });
 
 FirefeedUI.ProfileView = Backbone.View.extend({
-  el: $("#inner-body"),
   render: function() {
     this.$el.html(_.template($("#tmpl-profile-body").html()));
 
@@ -490,6 +486,7 @@ FirefeedUI.ProfileView = Backbone.View.extend({
       collection: this.collection, el: $("#spark-profile-list")
     });
     this._profileFeedView.render();
+    return this;
   },
   onClose: function() {
     this._profileFeedView.close();
@@ -497,9 +494,9 @@ FirefeedUI.ProfileView = Backbone.View.extend({
 });
 
 FirefeedUI.BigSparkView = Backbone.View.extend({
-  el: $("#inner-body"),
   render: function() {
     var content = _.template($("#tmpl-spark-content").html())(this.model.toJSON());
     this.$el.html(content);
+    return this;
   }
 });
