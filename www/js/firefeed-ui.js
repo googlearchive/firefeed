@@ -87,6 +87,15 @@ FirefeedUI.prototype._setupHandlers = function() {
       var view = new FirefeedUI.TimelineView({
         model: new FirefeedUI.User(info), collection: userFeed, limit: self._limit
       });
+      view.on("firefeed:post", function(post) {
+        self._firefeed.post(post, function(err, done) {
+          if (err) {
+            view.trigger("firefeed:post:failed");
+          } else {
+            view.trigger("firefeed:post:success"); 
+          }
+        });
+      });
       self._showView(view);
     },
     profile: function(id) {
@@ -140,35 +149,6 @@ FirefeedUI.prototype._showView = function(view, isHome) {
   this._currentView.body.render();
 };
 
-FirefeedUI.prototype._postHandler = function(e) {
-  var sparkText = $("#spark-input");
-  var sparkButton = $("#spark-button");
-  var containerEl = $("#spark-button-div");
-  var message = $("<div>", { class: "msg" }).html("Posting...");
-
-  var self = this;
-  e.preventDefault();
-  sparkButton.replaceWith(message);
-
-  var spinner = new Spinner();
-  spinner.spin(containerEl.get(0));
-  self._firefeed.post(sparkText.val(), function(err, done) {
-    if (!err) {
-      message.html("Posted!").css("background", "#008000");
-      sparkText.val("");
-    } else {
-      message.html("Posting failed!").css("background", "#FF6347");
-    }
-    spinner.stop();
-    $("#c-count").val(self._limit);
-    message.css("visibility", "visible");
-    message.fadeOut(1500, function() {
-      message.replaceWith(sparkButton);
-      sparkButton.click(self._postHandler.bind(self));
-    });
-  });
-};
-
 FirefeedUI.prototype._formatDate = function(date) {
   var localeDate = date.toLocaleString();
   // Remove GMT offset if it's there.
@@ -189,17 +169,8 @@ FirefeedUI.prototype._editableHandler = function(id, value) {
   return true;
 }
 
-FirefeedUI.prototype.render404 = function() {
-  // TODO: Add 404 page.
-  this._router.navigate("404", {trigger: true});
-};
-
 FirefeedUI.prototype.renderTimeline = function() {
   var self = this;
-
-
-  // Attach post spark button.
-  $("#spark-button").click(self._postHandler.bind(self));
 
   // Get some "suggested" users.
   self._firefeed.getSuggestedUsers(function(userid, info) {
@@ -449,10 +420,13 @@ FirefeedUI.TimelineView = Backbone.View.extend({
   el: $("#inner-body"),
   initialize: function(options) {
     this._limit = options.limit;
+    this.on("firefeed:post:failed", this.onPostFailed);
+    this.on("firefeed:post:success", this.onPostSuccess);
   },
   events: {
     "blur #spark-input": "textHandler",
-    "keyup #spark-input": "textHandler"
+    "keyup #spark-input": "textHandler",
+    "click #spark-button": "postHandler"
   },
   render: function() {
     var template = _.template($("#tmpl-timeline-content").html());
@@ -482,6 +456,38 @@ FirefeedUI.TimelineView = Backbone.View.extend({
       charCount.css("color", "#999");
       button.css("visibility", "visible");
     }
+  },
+  postHandler: function(e) {
+    e.preventDefault();
+
+    this._sparkButton = $(e.target);
+    this._message = $("<div>", { class: "msg" }).html("Posting...");
+    this._sparkButton.replaceWith(this._message);
+
+    this._spinner = new Spinner();
+    this._spinner.spin($("#spark-button-div").get(0));
+
+    this.trigger("firefeed:post", $("#spark-input").val());
+  },
+  onPostFailed: function() {
+    this._message.html("Posting failed!").css("background", "#FF6347");
+    this.resetPost();
+  },
+  onPostSuccess: function() {
+    this._message.html("Posted!").css("background", "#008000");
+    $("#spark-input").val("");
+    this.resetPost();
+  },
+  resetPost: function() {
+    this._spinner.stop();
+    $("#c-count").val(this._limit);
+    this._message.css("visibility", "visible");
+
+    var self = this;
+    this._message.fadeOut(1500, function() {
+      self._message.replaceWith(self._sparkButton);
+      self._sparkButton.click(self.postHandler.bind(self));
+    });
   },
   onClose: function() {
     this._userFeedView.close();
