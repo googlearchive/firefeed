@@ -189,8 +189,8 @@ Firefeed.prototype.login = function(silent, onComplete) {
 };
 
 /**
- * Logout the current user. The object may be reused after a logout, but only
- * after a successful login() has been performed.
+ * Logout the current user. Only unauthenticated operations may be performed
+ * after a logout call.
  */
 Firefeed.prototype.logout = function() {
   // Reset all keys and other user info.
@@ -403,8 +403,7 @@ Firefeed.prototype.getSuggestedUsers = function(onSuggestedUser) {
     var recentUsersQuery = self._firebase.child("recent-users").limit(20);
     var count = 0;
     
-    var recentUsersRef = self._firebase.child("recent-users");
-    recentUsersRef.once("value", function(recentUsersSnap) {
+    recentUsersQuery.once("value", function(recentUsersSnap) {
       recentUsersSnap.forEach(function(recentUserSnap) {
         if (count >= 5) {
           return true; // Stop enumerating.

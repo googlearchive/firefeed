@@ -5,7 +5,6 @@ describe("Initialization:", function() {
   it("Constructor", function() {
     firefeed = new Firefeed(BASEURL);
     expect(typeof firefeed).toBe(typeof {});
-    expect(firefeed._baseURL).toBe(BASEURL);
   });
 
   it("Login", function() {
@@ -26,7 +25,6 @@ describe("Initialization:", function() {
 
   it("Logout", function() {
     firefeed.logout();
-    expect(firefeed._firebase).toBe(null);
     expect(firefeed._userid).toBe(null);
     expect(firefeed._fullName).toBe(null);
     expect(firefeed._name).toBe(null);

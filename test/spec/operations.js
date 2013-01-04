@@ -64,8 +64,8 @@ describe("Operations:", function() {
     var flag4 = false;
 
     runs(function() {
-      var stream = firefeed1._mainUser.child("stream");
-      stream.once("value", function(snap) {
+      var feed = firefeed1._mainUser.child("feed");
+      feed.once("value", function(snap) {
         snap.forEach(function(sparkSnap) {
           if (sparkSnap.name() == spark1Id) {
             flag4 = true;
@@ -156,12 +156,12 @@ describe("Operations:", function() {
     }, "Waiting for spark to appear in user list", TIMEOUT);
   });
 
-  it("Post in follower stream", function() { 
-    // Check that the spark appeared in a follower's stream.
+  it("Post in follower feed", function() { 
+    // Check that the spark appeared in a follower's feed.
     var flag9 = false;
 
     runs(function() {
-      var ref = firefeed1._mainUser.child("stream").child(spark2Id);
+      var ref = firefeed1._mainUser.child("feed").child(spark2Id);
       ref.once("value", function(snap) {
         expect(snap.name()).toBe(spark2Id);
         expect(snap.val()).toBe(true);
@@ -171,6 +171,27 @@ describe("Operations:", function() {
 
     waitsFor(function() {
       return flag9;
-    }, "Waiting for spark to appear in follower stream", TIMEOUT);
+    }, "Waiting for spark to appear in follower feed", TIMEOUT);
+  });
+
+  it("Post and appear in recent list", function() {
+    // Check that USER appears in recent-users list.
+    var flag10 = false;
+
+    runs(function() {
+      var ref = firefeed1.post(content1 + content2, function(err, done) {
+        expect(err).toBe(false);
+        expect(typeof done).toBe("string");
+        var recentRef = firefeed1._firebase.child("recent-users");
+        recentRef.child(USER).once("value", function(snap) {
+          expect(snap.val()).toBe(true);
+          flag10 = true;
+        });
+      });
+    });
+
+    waitsFor(function() {
+      return flag10;
+    }, "Waiting for user to appear in recent-users list", TIMEOUT);
   });
 });
