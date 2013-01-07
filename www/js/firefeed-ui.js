@@ -1,22 +1,7 @@
 
 var __ff_ui;
 $(function() {
-  // Load the Facebook SDK, then initialize FirefeedUI;
-  window.fbAsyncInit = function() {
-    FB.init({
-      appId      : "104907529680402",
-      channelUrl : "channel.html"
-    });
-    __ff_ui = new FirefeedUI();
-  };
-  (function(d, debug){
-    var js, id = "facebook-jssdk", ref = d.getElementsByTagName("script")[0];
-    if (d.getElementById(id)) {return;}
-    js = d.createElement("script"); js.id = id; js.async = true;
-    js.src = "//connect.facebook.net/en_US/all" +
-             (debug ? "/debug" : "") + ".js";
-    ref.parentNode.insertBefore(js, ref);
-  }(document, /*debug*/ false));
+  __ff_ui = new FirefeedUI();
 });
 
 function FirefeedUI() {
