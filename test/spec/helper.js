@@ -3,7 +3,7 @@ var USER = "jasmine";
 var USER2 = "jasmine2";
 
 var TIMEOUT = 1000;
-var BASEURL = "https://firefeed.firebaseio-staging.com";
+var BASEURL = "https://firefeed-staging.firebaseio.com";
 
 // Replace $TOP_SECRET with the secret for BASEURL.
 var tokenGenerator = new FirebaseTokenGenerator("$TOP_SECRET");

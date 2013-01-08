@@ -12,7 +12,7 @@ function FirefeedUI() {
 
   this._feeds = {};
   this._userFeed = null;
-  this._firefeed = new Firefeed("https://firefeed.firebaseio-staging.com/");
+  this._firefeed = new Firefeed("https://firefeed-staging.firebaseio.com/");
 
   // Figure out if the user is logged in or not, with silent login.
   var self = this;
