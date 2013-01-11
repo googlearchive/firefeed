@@ -129,7 +129,9 @@ Firefeed.prototype.login = function(silent, onComplete) {
       if (done) {
         finish();
       } else {
-        onComplete(new Error("Could not auth to Firebase"), false);
+        // Maybe the token expired, clear it and retry manual login.
+        localStorage.clear();
+        self.login(silent, onComplete);
       }
     });
     return;
