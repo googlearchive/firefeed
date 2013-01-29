@@ -125,8 +125,8 @@ Firefeed.prototype.login = function(silent, onComplete) {
     return;
   } else if (token) {
     // Reuse the token, and auth the Firebase.
-    self._firebase.auth(token, function(done) {
-      if (done) {
+    self._firebase.auth(token, function(err) {
+      if (!err) {
         finish();
       } else {
         // Maybe the token expired, clear it and retry manual login.
@@ -261,8 +261,8 @@ Firefeed.prototype.follow = function(user, onComplete) {
   self._validateCallback(onComplete);
 
   // First, we add the user to the "following" list of the current user.
-  self._mainUser.child("following").child(user).set(true, function(done) {
-    if (!done) {
+  self._mainUser.child("following").child(user).set(true, function(err) {
+    if (err) {
       onComplete(new Error("Could not follow user"), false);
       return;
     }
@@ -313,8 +313,8 @@ Firefeed.prototype.post = function(content, onComplete) {
     timestamp: new Date().getTime()
   };
 
-  sparkRef.set(spark, function(done) {
-    if (!done) {
+  sparkRef.set(spark, function(err) {
+    if (err) {
       onComplete(new Error("Could not post spark"), false);
       return;
     }
@@ -322,8 +322,8 @@ Firefeed.prototype.post = function(content, onComplete) {
     // Now we add a "reference" to the spark we just pushed, by adding it to
     // the sparks list for the current user.
     var feedSparkRef = self._mainUser.child("sparks").child(sparkRefId);
-    feedSparkRef.set(true, function(done) {
-      if (!done) {
+    feedSparkRef.set(true, function(err) {
+      if (err) {
         onComplete(new Error("Could not add spark to feed"), false);
         return;
       }
