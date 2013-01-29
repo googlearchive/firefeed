@@ -125,7 +125,7 @@ Firefeed.prototype.login = function(silent, onComplete) {
     return;
   } else if (token) {
     // Reuse the token, and auth the Firebase.
-    self._firebase.auth(token, function(err) {
+    self._firebase.auth(token, function(err, dummy) {
       if (!err) {
         finish();
       } else {
@@ -139,19 +139,22 @@ Firefeed.prototype.login = function(silent, onComplete) {
 
   // No token was found, and silent was set to false. We'll attempt to login
   // the user via the Facebook helper.
-  var authClient = new FirebaseAuthClient(self._firebase);
-  authClient.login("facebook", function(err, token, info) {
+  var authClient = new FirebaseAuthClient(self._firebase, function(err, info) {
     if (err) {
       onComplete(new Error(err), false);
       return;
     }
+    console.log(info);
     // We got ourselves a token! Persist the info in localStorage for later.
     localStorage.setItem("userid", info.id);
-    localStorage.setItem("authToken", token);
+    localStorage.setItem("authToken", info.firebaseAuthToken);
     localStorage.setItem("name", info.first_name);
     localStorage.setItem("fullName", info.name);
     finish();
   });
+
+  // TODO: Refactor this code to use the session goodness provided by Firebase.
+  authClient.login("facebook");
 
   function finish() {
     self._userid = localStorage.getItem("userid");
