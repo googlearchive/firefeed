@@ -143,14 +143,14 @@ Firefeed.prototype.login = function(silent, onComplete) {
     if (err) {
       onComplete(new Error(err), false);
       return;
+    } else if (info) {
+      // We got ourselves a token! Persist the info in localStorage for later.
+      localStorage.setItem("userid", info.id);
+      localStorage.setItem("authToken", info.firebaseAuthToken);
+      localStorage.setItem("name", info.first_name);
+      localStorage.setItem("fullName", info.name);
+      finish();
     }
-    console.log(info);
-    // We got ourselves a token! Persist the info in localStorage for later.
-    localStorage.setItem("userid", info.id);
-    localStorage.setItem("authToken", info.firebaseAuthToken);
-    localStorage.setItem("name", info.first_name);
-    localStorage.setItem("fullName", info.name);
-    finish();
   });
 
   // TODO: Refactor this code to use the session goodness provided by Firebase.
