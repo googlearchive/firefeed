@@ -20,10 +20,8 @@ function FirefeedUI() {
     self._pageController(window.History.getState().hash, false);
   });
 
-  // Figure out if the user is logged in or not, with silent login.
-  self.login(function(info) {
-    self._loggedIn = info;
-    self._pageController(window.History.getState().hash);
+  self._firefeed.onLoginStateChange(function(error, user) {
+    self.onLoginStateChange(error, user);
   });
 }
 
@@ -147,17 +145,20 @@ FirefeedUI.prototype._editableHandler = function(id, value) {
   return true;
 }
 
-FirefeedUI.prototype.login = function(cb) {
-  // Try silent login in case the user is already logged in.
-  var self = this;
-  self._firefeed.login(true, function(err, info) {
-    if (!err && info) {
-      cb(info);
-    } else {
-      cb(false);
-    }
-  });
-};
+FirefeedUI.prototype.onLoginStateChange = function(error, info) {
+  this._spinner.stop();
+  var loginButton = $("#login-button");
+  loginButton.css("visibility", "visible");
+
+  this._loggedIn = info;
+  this._pageController(window.History.getState().hash);
+
+  if (info) {
+    this.renderTimeline(info);
+  } else {
+    this.renderHome();
+  }
+}
 
 FirefeedUI.prototype.logout = function(e) {
   if (e) {
@@ -210,14 +211,7 @@ FirefeedUI.prototype.renderHome = function(e) {
     e.preventDefault();
     loginButton.css("visibility", "hidden");
     self._spinner.spin($("#login-div").get(0));
-    self._firefeed.login(false, function(err, info) {
-      if (err) {
-        self._spinner.stop();
-        loginButton.css("visibility", "visible");
-      } else {
-        self.renderTimeline(info);
-      }
-    });
+    self._firefeed.login('facebook');
   });
 
   $("#about-link").remove();
