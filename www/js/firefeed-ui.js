@@ -81,7 +81,7 @@ FirefeedUI.prototype._postHandler = function(e) {
   var sparkText = $("#spark-input");
   var sparkButton = $("#spark-button");
   var containerEl = $("#spark-button-div");
-  var message = $("<div>", { class: "msg" }).html("Posting...");
+  var message = $("<div>").addClass("msg").html("Posting...");
 
   var self = this;
   e.preventDefault();
