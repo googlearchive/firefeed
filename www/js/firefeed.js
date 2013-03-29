@@ -12,6 +12,7 @@
  * @return   {Firefeed}
  */
 function Firefeed(baseURL, newContext) {
+  var self = this;
   this._name = null;
   this._userid = null;
   this._firebase = null;
@@ -29,6 +30,11 @@ function Firefeed(baseURL, newContext) {
   this._firebase = new Firebase(
     baseURL, newContext || false ? new Firebase.Context() : null
   );
+
+  this._authHandlers = [];
+  this._firebaseAuthClient = new FirebaseAuthClient(this._firebase, function(error, user) {
+    self._onLoginStateChange(error, user);
+  });
 }
 Firefeed.prototype = {
   _validateCallback: function(cb, notInit) {
@@ -85,121 +91,125 @@ Firefeed.prototype = {
     self._handlers.push({
       ref: feed, handler: handler, eventType: "child_removed"
     });
-  }
-};
-
-/**
- * Login a given user. The provided callback will be called with (err, info)
- * where "err" will be false if the login succeeded, and "info" is set to
- * an object containing the following fields:
- *
- *    id: User ID
- *    name: A string suitable for greeting the user (usually first name)
- *    pic: URL to a square avatar of the user
- *    location: Location of the user (can be empty)
- *    bio: A brief bio of the user (can be empty)
- * 
- * Some methods on this object may not be called until login() has succeeded,
- * and are noted as such.
- *
- * The login is performed using Firebase Easy Login, with Facebook as the
- * identity provider. You will probably call login() twice in your app, once
- * to check if the user is already logged in by passing the silent parameter as
- * true. If they are not (onComplete will be invoked with an error), you may
- * display a login button and associate the click action for it with another
- * call to login(), this time setting silent to false.
- *
- * @param    {boolean}   silent      Whether or not a silent (no popup)
- *                                   login should be performed.
- * @param    {Function}  onComplete  The callback to call when login is done.
- */
-Firefeed.prototype.login = function(silent, onComplete) {
-  var self = this;
-  self._validateCallback(onComplete, true);
-
-  // We store the Firebase token in localStorage, so if one isn't present
-  // we'll assume the user hasn't logged in.
-  var token = localStorage.getItem("authToken");
-  if (!token && silent) {
-    onComplete(new Error("User is not logged in"), false);
-    return;
-  } else if (token) {
-    // Reuse the token, and auth the Firebase.
-    self._firebase.auth(token, function(err, dummy) {
-      if (!err) {
-        finish();
-      } else {
-        // Maybe the token expired, clear it and retry manual login.
-        localStorage.clear();
-        self.login(silent, onComplete);
-      }
-    });
-    return;
-  }
-
-  // No token was found, and silent was set to false. We'll attempt to login
-  // the user via the Facebook helper.
-  var authClient = new FirebaseAuthClient(self._firebase, function(err, info) {
-    if (err) {
-      onComplete(new Error(err), false);
-      return;
-    } else if (info) {
-      // We got ourselves a token! Persist the info in localStorage for later.
-      localStorage.setItem("userid", info.id);
-      localStorage.setItem("authToken", info.firebaseAuthToken);
-      localStorage.setItem("name", info.first_name);
-      localStorage.setItem("fullName", info.name);
-      finish();
+  },
+  _onLoginStateChange: function(error, user) {
+    var self = this;
+    if (error) {
+      // An error occurred while authenticating the user.
+      this.handleLogout();
+    } else if (user) {
+      // The user is successfully logged in.
+      this.onLogin(user);
+    } else {
+      // No existing session found - the user is logged out.
+      this.onLogout();
     }
-  });
-
-  // TODO: Refactor this code to use the session goodness provided by Firebase.
-  authClient.login("facebook");
-
-  function finish() {
-    self._userid = localStorage.getItem("userid");
-    self._mainUser = self._firebase.child("users").child(self._userid);
-    self._fullName = localStorage.getItem("fullName");
-    self._name = localStorage.getItem("name");
-
-    var peopleRef = self._firebase.child("people").child(self._userid);
-    peopleRef.once("value", function(peopleSnap) {
-      var info = {};
-      var val = peopleSnap.val();
-      if (!val) {
-        // First time login, upload details.
-        info = {
-          name: self._name, fullName: self._fullName,
-          location: "", bio: "", pic: self._getPicURL()
-        };
-        peopleRef.set(info);
-      } else {
-        info = val;
-      }
-      peopleRef.child("presence").set("online");
-      info.id = self._userid;
-      onComplete(false, info);
-    });
   }
 };
 
 /**
- * Logout the current user. The object may be reused after a logout, but only
- * after a successful login() has been performed.
+ * Attach a callback method to be invoked whenever the authentication state
+ * of the user changes. If an error occurs during authentication, the error
+ * object will be non-null. If a user is successfully authenticated, the error
+ * object will be null, and the user object will be non-null. If a user is
+ * simply logged-out, both the error and user objects will be null.
+ */
+Firefeed.prototype.onLoginStateChange = function(onLoginStateChange) {
+  var self = this;
+  self._validateCallback(onLoginStateChange, true);
+  this._authHandlers.push(onLoginStateChange);
+
+  // Immediate invoke the function once with current user information
+  setTimeout(function() {
+    onLoginStateChange(null, this._user);
+  }, 0);
+}
+
+/**
+ * Login a user using Firebase Simple Login, using the specified authentication
+ * provider. Pass the optional 'rememberMe' argument to the FirebaseAuthClient
+ * in order to create a long-lasting session. If the user is successfully
+ * authenticated, then the previously-configured callback will be invoked with
+ * a null error and a user object.
+ *
+ * @param    {string}    provider    The authentication provider to use.
+ */
+Firefeed.prototype.login = function(provider) {
+  this._firebaseAuthClient.login(provider, {
+    'rememberMe': true
+  });
+};
+
+/**
+ * Logout the current user. The user object may be reused after a logout, but
+ * only after a successful login() has been performed. After a logout occurs,
+ * the session data will be cleared and writing data will no longer be
+ * permitted, as configured by security rules.
  */
 Firefeed.prototype.logout = function() {
-  // Reset all keys and other user info.
-  localStorage.clear();
+  this._firebaseAuthClient.logout();
+};
 
-  // Set presence to offline, reset all instance variables, and return!
-  var peopleRef = this._firebase.child("people").child(this._userid);
-  peopleRef.child("presence").set("offline");
-  this._firebase.unauth();
+/**
+ * On successful authentication, set up Firebase references and hang on to
+ * relevant user data like id and name. Firebase Simple Login automatically
+ * sessions the user using a combination of browser cookies and local storage
+ * so there is no need to do any additional sessioning here.
+ */
+Firefeed.prototype.onLogin = function(user) {
+  var self = this;
+  this._userid = user.id;
+  this._mainUser = self._firebase.child("users").child(self._userid);
+  this._fullName = user.name;
+  this._name = user.first_name;
 
+  var peopleRef = self._firebase.child("people").child(self._userid);
+  peopleRef.once("value", function(peopleSnap) {
+    var info = {};
+    var val = peopleSnap.val();
+    if (!val) {
+      // If this is a first time login, upload user details.
+      info = {
+        name: self._name, fullName: self._fullName,
+        location: "", bio: "", pic: self._getPicURL()
+      };
+      peopleRef.set(info);
+    } else {
+      info = val;
+    }
+    peopleRef.child("presence").set("online");
+    info.id = self._userid;
+    self._user = info;
+
+    // Notify downstream listeners for new authenticated user state
+    for (var i = 0; i < self._authHandlers.length; i++) {
+      self._authHandlers[i](null, self._user);
+    }
+  });
+}
+
+/**
+ * On logout, clean up by removing expired user session data and marking
+ * the current user as offline. Firebase Simple Login automatically handles
+ * user sessions, so there is no need to do any additional sessioning here.
+ */
+Firefeed.prototype.onLogout = function() {
+  if (this._userid) {
+    // Set presence to offline, reset all instance variables, and return!
+    var peopleRef = this._firebase.child("people").child(this._userid);
+    peopleRef.child("presence").set("offline");    
+  }
+
+  this._user = null;
   this._userid = null;
   this._mainUser = null;
   this._fullName = null;
   this._name = null;
+
+  // Notify downstream listeners for new authenticated user state
+  for (var i = 0; i < this._authHandlers.length; i++) {
+    self._authHandlers[i](null, null);
+  }
 };
 
 /**
