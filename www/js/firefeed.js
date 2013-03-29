@@ -147,6 +147,11 @@ Firefeed.prototype.login = function(provider) {
  * permitted, as configured by security rules.
  */
 Firefeed.prototype.logout = function() {
+  if (this._userid) {
+    // Set presence to offline, reset all instance variables, and return!
+    var peopleRef = this._firebase.child("people").child(this._userid);
+    peopleRef.child("presence").set("offline");    
+  }
   this._firebaseAuthClient.logout();
 };
 
@@ -194,12 +199,6 @@ Firefeed.prototype.onLogin = function(user) {
  * user sessions, so there is no need to do any additional sessioning here.
  */
 Firefeed.prototype.onLogout = function() {
-  if (this._userid) {
-    // Set presence to offline, reset all instance variables, and return!
-    var peopleRef = this._firebase.child("people").child(this._userid);
-    peopleRef.child("presence").set("offline");    
-  }
-
   this._user = null;
   this._userid = null;
   this._mainUser = null;
@@ -207,6 +206,7 @@ Firefeed.prototype.onLogout = function() {
   this._name = null;
 
   // Notify downstream listeners for new authenticated user state
+  var self = this;
   for (var i = 0; i < this._authHandlers.length; i++) {
     self._authHandlers[i](null, null);
   }

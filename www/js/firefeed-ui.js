@@ -151,8 +151,6 @@ FirefeedUI.prototype.onLoginStateChange = function(error, info) {
   loginButton.css("visibility", "visible");
 
   this._loggedIn = info;
-  this._pageController(window.History.getState().hash);
-
   if (info) {
     this.renderTimeline(info);
   } else {
