@@ -60,6 +60,19 @@
       "$sparkid": {
         ".write": "root.child('sparks/' + $sparkid + '/author').val() == auth.id"
       }
+    },
+    "search": {
+      "firstName": {
+        "$searchKey": {
+          ".write": "auth != null && (root.child('people/' + auth.id + '/firstName').val() + '|' + root.child('people/' + auth.id + '/lastName').val() + '|' + auth.id) == $searchKey && newData.val() == auth.id"
+        }
+      },
+      "lastName": {
+        "$searchKey": {
+          ".write": "auth != null && (root.child('people/' + auth.id + '/lastName').val() + '|' + root.child('people/' + auth.id + '/firstName').val() + '|' + auth.id) == $searchKey && newData.val() == auth.id"
+        }
+      }
     }
   }
 }
+

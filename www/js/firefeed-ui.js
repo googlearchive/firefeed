@@ -8,7 +8,7 @@ function FirefeedUI() {
   this._limit = 141;
   this._loggedIn = false;
   this._spinner = new Spinner();
-  this._firefeed = new Firefeed("http://firefeed.firebaseio.com/");
+  this._firefeed = new Firefeed("http://firefeed.fblocal.com:9000/");
   this._unload = null;
 
   // Setup page navigation.
@@ -34,6 +34,10 @@ FirefeedUI.prototype._setupHandlers = function() {
   $(document).on("click", "a.spark-link", function(e) {
     e.preventDefault();
     self.goSpark($(this).attr("href"));
+  });
+  $(document).on("click", "#search-button", function(e) {
+    e.preventDefault();
+    self._go("/?search=");
   });
 };
 
@@ -63,6 +67,9 @@ FirefeedUI.prototype._pageController = function(url) {
       } else {
         this._unload = this.renderSpark(value[1]);
       }
+      break;
+    case "search":
+      this._unload = this.renderSearch();
       break;
     case "timeline":
     default:
@@ -143,20 +150,18 @@ FirefeedUI.prototype._editableHandler = function(id, value) {
     this._firefeed.setProfileField("bio", value);
   }
   return true;
-}
+};
 
 FirefeedUI.prototype.onLoginStateChange = function(error, info) {
   this._spinner.stop();
-  var loginButton = $("#login-button");
-  loginButton.css("visibility", "visible");
-
   this._loggedIn = info;
+  $("#header").html(Mustache.to_html($("#tmpl-page-header").html(), {user: this._loggedIn}));
   if (info) {
     this.renderTimeline(info);
   } else {
     this.renderHome();
   }
-}
+};
 
 FirefeedUI.prototype.logout = function(e) {
   if (e) {
@@ -222,15 +227,46 @@ FirefeedUI.prototype.renderHome = function(e) {
   return function() { self._firefeed.unload(); };
 };
 
+FirefeedUI.prototype.renderSearch = function() {
+  var self = this;
+  $("#header").html(Mustache.to_html($("#tmpl-page-header").html(), {user: self._loggedIn}));
+  // Render body.
+  var content = Mustache.to_html($("#tmpl-search-content").html());
+  var body = Mustache.to_html($("#tmpl-content").html(), {
+    classes: "cf", content: content
+  });
+  $("#body").html(body);
+
+  var searchInput = $("#search-input");
+  var MAX_SEARCH_TERM_LENGTH = 20;
+  self._firefeed.startSearch(function(results) {
+    var searchResultHtml = Mustache.to_html($('#tmpl-search-result').html(), {results: results});
+    $('#search-result-list').html(searchResultHtml);
+  });
+  var onCharChange = function() {
+    var searchTerm = searchInput.val();
+    if (searchTerm.length > MAX_SEARCH_TERM_LENGTH) {
+      searchTerm = searchTerm.substr(0, MAX_SEARCH_TERM_LENGTH)
+      searchInput.val(searchTerm);
+    }
+    self._firefeed.updateSearchTerm(searchTerm);
+  };
+
+  searchInput.keyup(onCharChange);
+  searchInput.blur(onCharChange);
+
+  return function() { self._firefeed.unload(); };
+};
+
 FirefeedUI.prototype.renderTimeline = function(info) {
   var self = this;
-  $("#header").html($("#tmpl-page-header").html());
+  $("#header").html(Mustache.to_html($("#tmpl-page-header").html(), {user: self._loggedIn}));
   $("#top-logo").click(this.goHome.bind(this));
   $("#logout-button").click(this.logout.bind(this));
 
   // Render placeholders for location / bio if not filled in.
-  info.location = info.location || "Your Location...";
-  info.bio = info.bio || "Your Bio...";
+  info.location = info.location.substr(0, 80) || "Your Location...";
+  info.bio = info.bio.substr(0, 141) || "Your Bio...";
 
   // Render body.
   var content = Mustache.to_html($("#tmpl-timeline-content").html(), info);
@@ -300,13 +336,8 @@ FirefeedUI.prototype.goProfile = function(uid) {
 
 FirefeedUI.prototype.renderProfile = function(uid) {
   var self = this;
-  $("#header").html($("#tmpl-page-header").html());
+  $("#header").html(Mustache.to_html($("#tmpl-page-header").html(), {user: self._loggedIn}));
   $("#top-logo").click(this.goHome.bind(this));
-  if (self._loggedIn) {
-    $("#logout-button").click(self.logout.bind(self));
-  } else {
-    $("#logout-button").remove();
-  }
 
   // Render profile page body.
   $("#body").html(Mustache.to_html($("#tmpl-profile-body").html()));
@@ -345,7 +376,7 @@ FirefeedUI.prototype.goSpark = function(id) {
 };
 
 FirefeedUI.prototype.renderSpark = function(id) {
-  $("#header").html($("#tmpl-page-header").html());
+  $("#header").html(Mustache.to_html($("#tmpl-page-header").html(), {user: self._loggedIn}));
   $("#top-logo").click(this.goHome.bind(this));
   $("#logout-button").click(this.logout.bind(this));
 

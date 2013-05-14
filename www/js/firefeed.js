@@ -18,6 +18,8 @@ function Firefeed(baseURL, newContext) {
   this._firebase = null;
   this._mainUser = null;
   this._fullName = null;
+  this._searchHandler = null;
+  this._currentSearch = null;
   
   // Every time we call firebaseRef.on, we need to remember to call .off,
   // when requested by the caller via unload(). We'll store our handlers
@@ -53,7 +55,7 @@ Firefeed.prototype = {
     }
   },
   _getParameterByName: function(name) {
-    var expr = "[?&]" + name + "=([^&]*)"
+    var expr = "[?&]" + name + "=([^&]*)";
     var match = RegExp().exec(window.location.search);
     return match && decodeURIComponent(match[1].replace(/\+/g, " "));
   },
@@ -73,8 +75,10 @@ Firefeed.prototype = {
       var sparkRef = self._firebase.child("sparks").child(sparkID);
       var handler = sparkRef.on("value", function(sparkSnap) {
         var ret = sparkSnap.val();
-        ret.pic = self._getPicURL(ret.author);
-        onComplete(sparkSnap.name(), ret);
+        if (ret !== null) {
+          ret.pic = self._getPicURL(ret.author);
+          onComplete(sparkSnap.name(), ret);
+        }
       });
       self._handlers.push({
         ref: sparkRef, handler: handler, eventType: "value"
@@ -225,18 +229,65 @@ Firefeed.prototype.onLogout = function() {
  * @param    {string}    user        The user to get information for.
  * @param    {Function}  onComplete  The callback to call with the user info.
  */
-Firefeed.prototype.getUserInfo = function(user, onComplete) {
+Firefeed.prototype.getUserInfo = function(user, onComplete,
+                                          onFollower, onFollowersComplete,
+                                          onFollowee, onFolloweesComplete) {
   var self = this;
   self._validateCallback(onComplete, true);
   var ref = self._firebase.child("people").child(user);
   var handler = ref.on("value", function(snap) {
     var val = snap.val();
     val.pic = self._getPicURL(snap.name(), true);
+    val.bio = val.bio.substr(0, 141);
+    val.location = val.location.substr(0, 80);
     onComplete(val);
   });
   self._handlers.push({
     ref: ref, handler: handler, eventType: "value"
   });
+};
+
+
+Firefeed.prototype.startSearch = function(resultsHandler) {
+  this._searchHandler = resultsHandler;
+};
+
+Firefeed.prototype.updateSearchTerm = function(term) {
+  var isValidStem = function(stem) {
+    var invalid = ['.', '#', '$', '/', '[', ']'];
+    for (var i = 0; i < invalid.length; ++i) {
+      if (stem.indexOf([invalid[i]]) !== -1) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  if (isValidStem(term) && term.length >= 3) {
+    if (this._currentSearch) {
+      // we have an existing search
+      if (this._currentSearch.containsTerm(term)) {
+        // update the term
+        this._currentSearch.updateTerm(term);
+      } else {
+        // stop the search
+        this.stopSearching();
+      }
+    } else {
+      // This is a new search
+      this._currentSearch = new FirefeedSearch(this._firebase, term, this._searchHandler);
+    }
+  } else {
+    this.stopSearching();
+  }
+};
+
+Firefeed.prototype.stopSearching = function() {
+  if (this._currentSearch) {
+    this._currentSearch.stopSearch();
+    this._currentSearch = null;
+  }
+  this._searchHandler && this._searchHandler([]);
 };
 
 /**
@@ -280,7 +331,7 @@ Firefeed.prototype.follow = function(user, onComplete) {
       return;
     }
 
-    // Then, we add the current user to the folowers list of user just followed.
+    // Then, we add the current user to the followers list of user just followed.
     var followUser = self._firebase.child("users").child(user);
     followUser.child("followers").child(self._userid).set(true);
 
@@ -350,7 +401,7 @@ Firefeed.prototype.post = function(content, onComplete) {
       var recentUsersRef = self._firebase.child("recent-users");
       recentUsersRef.child(self._userid).setWithPriority(true, time);
 
-      // We'll also add the spark to a seperate list of most recent sparks
+      // We'll also add the spark to a separate list of most recent sparks
       // which can be displayed elsewhere, just like active users above.
       var recentSparkRef = self._firebase.child("recent-sparks");
       recentSparkRef.child(sparkRefId).setWithPriority(true, time);

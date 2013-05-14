@@ -390,6 +390,14 @@ label.checkbox input{margin-right: 5px;}
   background: inherit;
 }
 
+#inputLocation {
+  height: 30px;
+}
+
+#inputBio {
+    height: 88px;
+}
+
 /* Buttons
 ============================================================ */
 .btn{
