@@ -168,6 +168,13 @@ Firefeed.prototype.logout = function() {
 Firefeed.prototype.onLogin = function(user) {
   var self = this;
   this._userid = user.id;
+
+  // Populate search index
+  var firstNameKey = [user['first_name'], user['last_name'], user['id']].join('|').toLowerCase();
+  var lastNameKey = [user['last_name'], user['first_name'], user['id']].join('|').toLowerCase();
+  this._firebase.child('search/firstName').child(firstNameKey).set(user['id']);
+  this._firebase.child('search/lastName').child(lastNameKey).set(user['id']);
+
   this._mainUser = self._firebase.child("users").child(self._userid);
   this._fullName = user.name;
   this._name = user.first_name;
