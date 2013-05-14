@@ -307,6 +307,7 @@ h3,
 /* Footer
 ============================================================ */
 #footer{
+  clear: both;
   color:#656565;
   font-size: 13px;
   padding-top: 50px;

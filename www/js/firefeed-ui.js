@@ -342,6 +342,18 @@ FirefeedUI.prototype.renderProfile = function(uid) {
   // Render profile page body.
   $("#body").html(Mustache.to_html($("#tmpl-profile-body").html()));
 
+  var followersLoaded = false;
+  var followers = [];
+  var renderFollowers = function() {
+    $('#follower-profile-list').html(Mustache.to_html($('#tmpl-user-list').html(), {users: followers}));
+  };
+
+  var followeesLoaded = false;
+  var followees = [];
+  var renderFollowees = function() {
+    $('#followee-profile-list').html(Mustache.to_html($('#tmpl-user-list').html(), {users: followees}));
+  };
+
   // Update user info.
   self._firefeed.getUserInfo(uid, function(info) {
     info.id = uid;
@@ -350,7 +362,7 @@ FirefeedUI.prototype.renderProfile = function(uid) {
     var button = $("#followBtn-" + info.id);
 
     // Show follow button if logged in.
-    if (self._loggedIn && self._loggedIn != info.id) {
+    if (self._loggedIn && self._loggedIn.id != info.id) {
       button.click(function(e) {
         e.preventDefault();
         self._firefeed.follow(info.id, function(err, done) {
@@ -361,6 +373,22 @@ FirefeedUI.prototype.renderProfile = function(uid) {
     } else {
       button.hide();
     }
+  }, /*onFollower=*/ function(newFollower) {
+    followers.push(newFollower);
+    if (followersLoaded) {
+      renderFollowers();
+    }
+  }, /*onFollowersComplete=*/ function() {
+    followersLoaded = true;
+    renderFollowers();
+  }, /*onFollowee=*/ function(newFollowee) {
+    followees.push(newFollowee);
+    if (followeesLoaded) {
+      renderFollowees();
+    }
+  }, /*onFolloweesComplete=*/ function() {
+    followeesLoaded = true;
+    renderFollowees();
   });
 
   // Render this user's tweets. Capped to 5 for now.
@@ -397,7 +425,8 @@ FirefeedUI.prototype.renderSpark = function(id) {
           classes: "cf", content: content
         });
         $("#body").html(body);
-      });
+      }, /*onFollower=*/ function() {}, /*onFollowersComplete=*/ function() {},
+        /*onFollowee=*/ function() {}, /*onFolloweesComplete=*/ function() {});
     }
   });
   return function() { self._firefeed.unload(); };

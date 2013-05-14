@@ -252,6 +252,37 @@ Firefeed.prototype.getUserInfo = function(user, onComplete,
   self._handlers.push({
     ref: ref, handler: handler, eventType: "value"
   });
+
+  var userRef = self._firebase.child('users').child(user);
+  var followerRef = userRef.child('followers');
+  var followerHandle = followerRef.on('child_added', function(snapshot) {
+    self._firebase.child('people').child(snapshot.name()).once('value', function(snap) {
+      var userInfo = snap.val();
+      userInfo['userId'] = snapshot.name();
+      onFollower(userInfo);
+    });
+  });
+  self._handlers.push({
+    ref: followerRef, handle: followerHandle, eventType: 'child_added'
+  });
+  followerRef.once('value', function(snap) {
+    onFollowersComplete();
+  });
+
+  var followeeRef = userRef.child('following');
+  var followeeHandle = followeeRef.on('child_added', function(snapshot) {
+    self._firebase.child('people').child(snapshot.name()).once('value', function(snap) {
+      var userInfo = snap.val();
+      userInfo['userId'] = snapshot.name();
+      onFollowee(userInfo);
+    });
+  });
+  self._handlers.push({
+    ref: followeeRef, handle: followeeHandle, eventType: 'child_added'
+  });
+  followeeRef.once('value', function(snap) {
+    onFolloweesComplete();
+  });
 };
 
 
