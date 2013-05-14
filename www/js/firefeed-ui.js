@@ -8,7 +8,7 @@ function FirefeedUI() {
   this._limit = 141;
   this._loggedIn = false;
   this._spinner = new Spinner();
-  this._firefeed = new Firefeed("http://firefeed.fblocal.com:9000/");
+  this._firefeed = new Firefeed("https://firefeed.firebaseIO.com/");
   this._unload = null;
 
   // Setup page navigation.
