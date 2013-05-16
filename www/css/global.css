@@ -307,6 +307,7 @@ h3,
 /* Footer
 ============================================================ */
 #footer{
+  clear: both;
   color:#656565;
   font-size: 13px;
   padding-top: 50px;
@@ -388,6 +389,14 @@ label.checkbox input{margin-right: 5px;}
 .editable input {
   margin-top: -3px;
   background: inherit;
+}
+
+#inputLocation {
+  height: 30px;
+}
+
+#inputBio {
+    height: 88px;
 }
 
 /* Buttons
@@ -525,6 +534,22 @@ label.checkbox input{margin-right: 5px;}
 
 /* Custom
 ============================================================ */
+#search-result-list {
+  margin: 15px;
+}
+
+#suggested-users {
+  min-height: 200px;
+}
+
+#spark-button-div{
+  height: 50px;
+}
+
+#spark-profile-list {
+  width: 100%;
+}
+
 .wrapper a {
   color: #333;
   text-decoration: none;
@@ -553,14 +578,6 @@ h2.subheading a {
 
 h2.subheading a:hover {
   color: #AB8319;
-}
-
-#suggested-users {
-  min-height: 200px;
-}
-
-#spark-button-div{
-  height: 50px;
 }
 
 .about{
@@ -632,6 +649,28 @@ span.bold {
   text-align: center;
   text-shadow: 0 -1px rgba(0,0,0,0.25);
   visibility: hidden;
+}
+
+.profile-column-left {
+  float: left;
+  margin: 20px;
+  width: 45%;
+}
+
+.profile-column-right {
+  float: right;
+  margin: 20px;
+  margin-right: -10px;
+  width: 45%;
+}
+
+.profile-column ul {
+  width: 100%;
+}
+
+.profile-column h3 {
+  font-size: 20px;
+  text-align: center;
 }
 
 /* Tablets

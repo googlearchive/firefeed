@@ -8,7 +8,7 @@ function FirefeedUI() {
   this._limit = 141;
   this._loggedIn = false;
   this._spinner = new Spinner();
-  this._firefeed = new Firefeed("http://firefeed.firebaseio.com/");
+  this._firefeed = new Firefeed("https://firefeed.firebaseIO.com/");
   this._unload = null;
 
   // Setup page navigation.
@@ -29,11 +29,23 @@ FirefeedUI.prototype._setupHandlers = function() {
   var self = this;
   $(document).on("click", "a.profile-link", function(e) {
     e.preventDefault();
-    self.goProfile($(this).attr("href"));
+    self._go($(this).attr("href"));
   });
   $(document).on("click", "a.spark-link", function(e) {
     e.preventDefault();
-    self.goSpark($(this).attr("href"));
+    self._go($(this).attr("href"));
+  });
+  $(document).on("click", "#search-button", function(e) {
+    e.preventDefault();
+    self._go("/?search");
+  });
+  $(document).on("click", "#top-logo", function(e) {
+    e.preventDefault();
+    self._go("/");
+  });
+  $(document).on("click", "#logout-button", function(e) {
+    e.preventDefault();
+    self.logout();
   });
 };
 
@@ -64,7 +76,9 @@ FirefeedUI.prototype._pageController = function(url) {
         this._unload = this.renderSpark(value[1]);
       }
       break;
-    case "timeline":
+    case "search":
+      this._unload = this.renderSearch();
+      break;
     default:
       if (this._loggedIn) {
         this._unload = this.renderTimeline(this._loggedIn);
@@ -143,20 +157,18 @@ FirefeedUI.prototype._editableHandler = function(id, value) {
     this._firefeed.setProfileField("bio", value);
   }
   return true;
-}
+};
 
 FirefeedUI.prototype.onLoginStateChange = function(error, info) {
   this._spinner.stop();
-  var loginButton = $("#login-button");
-  loginButton.css("visibility", "visible");
-
   this._loggedIn = info;
+  $("#header").html(Mustache.to_html($("#tmpl-page-header").html(), {user: this._loggedIn}));
   if (info) {
     this.renderTimeline(info);
   } else {
     this.renderHome();
   }
-}
+};
 
 FirefeedUI.prototype.logout = function(e) {
   if (e) {
@@ -222,15 +234,44 @@ FirefeedUI.prototype.renderHome = function(e) {
   return function() { self._firefeed.unload(); };
 };
 
+FirefeedUI.prototype.renderSearch = function() {
+  var self = this;
+  $("#header").html(Mustache.to_html($("#tmpl-page-header").html(), {user: self._loggedIn}));
+  // Render body.
+  var content = Mustache.to_html($("#tmpl-search-content").html());
+  var body = Mustache.to_html($("#tmpl-content").html(), {
+    classes: "cf", content: content
+  });
+  $("#body").html(body);
+
+  var searchInput = $("#search-input");
+  var MAX_SEARCH_TERM_LENGTH = 20;
+  self._firefeed.startSearch(function(results) {
+    var searchResultHtml = Mustache.to_html($('#tmpl-search-result').html(), {results: results});
+    $('#search-result-list').html(searchResultHtml);
+  });
+  var onCharChange = function() {
+    var searchTerm = searchInput.val();
+    if (searchTerm.length > MAX_SEARCH_TERM_LENGTH) {
+      searchTerm = searchTerm.substr(0, MAX_SEARCH_TERM_LENGTH)
+      searchInput.val(searchTerm);
+    }
+    self._firefeed.updateSearchTerm(searchTerm);
+  };
+
+  searchInput.keyup(onCharChange);
+  searchInput.blur(onCharChange);
+
+  return function() { self._firefeed.unload(); };
+};
+
 FirefeedUI.prototype.renderTimeline = function(info) {
   var self = this;
-  $("#header").html($("#tmpl-page-header").html());
-  $("#top-logo").click(this.goHome.bind(this));
-  $("#logout-button").click(this.logout.bind(this));
+  $("#header").html(Mustache.to_html($("#tmpl-page-header").html(), {user: self._loggedIn}));
 
   // Render placeholders for location / bio if not filled in.
-  info.location = info.location || "Your Location...";
-  info.bio = info.bio || "Your Bio...";
+  info.location = info.location.substr(0, 80) || "Your Location...";
+  info.bio = info.bio.substr(0, 141) || "Your Bio...";
 
   // Render body.
   var content = Mustache.to_html($("#tmpl-timeline-content").html(), info);
@@ -294,22 +335,24 @@ FirefeedUI.prototype.renderTimeline = function(info) {
   return function() { self._firefeed.unload(); };
 };
 
-FirefeedUI.prototype.goProfile = function(uid) {
-  this._go(uid);
-};
-
 FirefeedUI.prototype.renderProfile = function(uid) {
   var self = this;
-  $("#header").html($("#tmpl-page-header").html());
-  $("#top-logo").click(this.goHome.bind(this));
-  if (self._loggedIn) {
-    $("#logout-button").click(self.logout.bind(self));
-  } else {
-    $("#logout-button").remove();
-  }
+  $("#header").html(Mustache.to_html($("#tmpl-page-header").html(), {user: self._loggedIn}));
 
   // Render profile page body.
   $("#body").html(Mustache.to_html($("#tmpl-profile-body").html()));
+
+  var followersLoaded = false;
+  var followers = [];
+  var renderFollowers = function() {
+    $('#follower-profile-list').html(Mustache.to_html($('#tmpl-user-list').html(), {users: followers}));
+  };
+
+  var followeesLoaded = false;
+  var followees = [];
+  var renderFollowees = function() {
+    $('#followee-profile-list').html(Mustache.to_html($('#tmpl-user-list').html(), {users: followees}));
+  };
 
   // Update user info.
   self._firefeed.getUserInfo(uid, function(info) {
@@ -319,7 +362,7 @@ FirefeedUI.prototype.renderProfile = function(uid) {
     var button = $("#followBtn-" + info.id);
 
     // Show follow button if logged in.
-    if (self._loggedIn && self._loggedIn != info.id) {
+    if (self._loggedIn && self._loggedIn.id != info.id) {
       button.click(function(e) {
         e.preventDefault();
         self._firefeed.follow(info.id, function(err, done) {
@@ -330,6 +373,22 @@ FirefeedUI.prototype.renderProfile = function(uid) {
     } else {
       button.hide();
     }
+  }, /*onFollower=*/ function(newFollower) {
+    followers.push(newFollower);
+    if (followersLoaded) {
+      renderFollowers();
+    }
+  }, /*onFollowersComplete=*/ function() {
+    followersLoaded = true;
+    renderFollowers();
+  }, /*onFollowee=*/ function(newFollowee) {
+    followees.push(newFollowee);
+    if (followeesLoaded) {
+      renderFollowees();
+    }
+  }, /*onFolloweesComplete=*/ function() {
+    followeesLoaded = true;
+    renderFollowees();
   });
 
   // Render this user's tweets. Capped to 5 for now.
@@ -340,17 +399,11 @@ FirefeedUI.prototype.renderProfile = function(uid) {
   return function() { self._firefeed.unload(); };
 };
 
-FirefeedUI.prototype.goSpark = function(id) {
-  this._go(id);
-};
-
 FirefeedUI.prototype.renderSpark = function(id) {
-  $("#header").html($("#tmpl-page-header").html());
-  $("#top-logo").click(this.goHome.bind(this));
-  $("#logout-button").click(this.logout.bind(this));
+  var self = this;
+  $("#header").html(Mustache.to_html($("#tmpl-page-header").html(), {user: self._loggedIn}));
 
   // Render spark page body.
-  var self = this;
   self._firefeed.getSpark(id, function(spark) {
     if (spark !== null && spark.author) {
       self._firefeed.getUserInfo(spark.author, function(authorInfo) {
