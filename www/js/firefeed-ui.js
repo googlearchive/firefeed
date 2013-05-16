@@ -400,10 +400,10 @@ FirefeedUI.prototype.renderProfile = function(uid) {
 };
 
 FirefeedUI.prototype.renderSpark = function(id) {
+  var self = this;
   $("#header").html(Mustache.to_html($("#tmpl-page-header").html(), {user: self._loggedIn}));
 
   // Render spark page body.
-  var self = this;
   self._firefeed.getSpark(id, function(spark) {
     if (spark !== null && spark.author) {
       self._firefeed.getUserInfo(spark.author, function(authorInfo) {

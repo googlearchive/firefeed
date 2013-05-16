@@ -167,12 +167,16 @@
             <div id="profile-content">
             </div>
           </div>
-          <ul id="spark-profile-list" class="item-list third left">
-          </ul>
-          <ul id="follower-profile-list" class="item-list third center">
-          </ul>
-          <ul id="followee-profile-list" class="item-list third right">
-          </ul>
+          <ul id="spark-profile-list" class="item-list third left"></ul>
+          <br/>
+          <div class="profile-column profile-column-left">
+            <h3>Followers</h3>
+            <ul id="follower-profile-list" class="item-list third center"></ul>
+          </div>
+          <div class="profile-column profile-column-right">
+            <h3>Following</h3>
+            <ul id="followee-profile-list" class="item-list third right"></ul>
+          </div>
         </div>
       </script>
 
@@ -186,13 +190,9 @@
               </a>
             </div>
             <div class="body {{relative}}">
-              <p class="title end">
-                <a class="profile-link" href="/?profile={{author}}">{{by}}</a>
-              </p>
-              <p class="main-copy pushv">{{fullName}}</p>
-              <!--p class="meta end">
-                <a class="spark-link" href="?spark={{sparkId}}">{{friendlyTimestamp}}</a>
-              </p-->
+              <a class="profile-link" href="/?profile={{userId}}">
+                <p class="main-copy pushv">{{fullName}}</p>
+              </a>
             </div>
           </div>
         </li>
