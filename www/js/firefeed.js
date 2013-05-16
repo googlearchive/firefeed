@@ -20,7 +20,7 @@ function Firefeed(baseURL, newContext) {
   this._fullName = null;
   this._searchHandler = null;
   this._currentSearch = null;
-  
+
   // Every time we call firebaseRef.on, we need to remember to call .off,
   // when requested by the caller via unload(). We'll store our handlers
   // here so we can clear them later.
@@ -154,7 +154,7 @@ Firefeed.prototype.logout = function() {
   if (this._userid) {
     // Set presence to offline, reset all instance variables, and return!
     var peopleRef = this._firebase.child("people").child(this._userid);
-    peopleRef.child("presence").set("offline");    
+    peopleRef.child("presence").set("offline");
   }
   this._firebaseAuthClient.logout();
 };
@@ -241,6 +241,7 @@ Firefeed.prototype.getUserInfo = function(user, onComplete,
                                           onFollowee, onFolloweesComplete) {
   var self = this;
   self._validateCallback(onComplete, true);
+
   var ref = self._firebase.child("people").child(user);
   var handler = ref.on("value", function(snap) {
     var val = snap.val();
@@ -259,14 +260,14 @@ Firefeed.prototype.getUserInfo = function(user, onComplete,
     self._firebase.child('people').child(snapshot.name()).once('value', function(snap) {
       var userInfo = snap.val();
       userInfo['userId'] = snapshot.name();
-      onFollower(userInfo);
+      if (onFollower) onFollower(userInfo);
     });
   });
   self._handlers.push({
     ref: followerRef, handle: followerHandle, eventType: 'child_added'
   });
   followerRef.once('value', function(snap) {
-    onFollowersComplete();
+    if (onFollowersComplete) onFollowersComplete();
   });
 
   var followeeRef = userRef.child('following');
@@ -274,14 +275,14 @@ Firefeed.prototype.getUserInfo = function(user, onComplete,
     self._firebase.child('people').child(snapshot.name()).once('value', function(snap) {
       var userInfo = snap.val();
       userInfo['userId'] = snapshot.name();
-      onFollowee(userInfo);
+      if (onFollowee) onFollowee(userInfo);
     });
   });
   self._handlers.push({
     ref: followeeRef, handle: followeeHandle, eventType: 'child_added'
   });
   followeeRef.once('value', function(snap) {
-    onFolloweesComplete();
+    if (onFolloweesComplete) onFolloweesComplete();
   });
 };
 
@@ -402,15 +403,15 @@ Firefeed.prototype.post = function(content, onComplete) {
   var self = this;
   self._validateString(content, "spark");
   self._validateCallback(onComplete);
-  
+
   // First, we add the spark to the global sparks list. push() ensures that
   // we get a unique ID for the spark that is chronologically ordered.
   var sparkRef = self._firebase.child("sparks").push();
   var sparkRefId = sparkRef.name();
 
   var spark = {
-    author: self._userid, 
-    by: self._fullName, 
+    author: self._userid,
+    by: self._fullName,
     content: content,
     timestamp: new Date().getTime()
   };
@@ -492,11 +493,11 @@ Firefeed.prototype.getSuggestedUsers = function(onSuggestedUser) {
       }
     }
 
-    // We limit to 20 to try to ensure that there are at least 5 you aren't already 
-    // following.
+    // We limit to 20 to try to ensure that there are at least 5 you aren't
+    // already following.
     var recentUsersQuery = self._firebase.child("recent-users").limit(20);
     var count = 0;
-    
+
     var recentUsersRef = self._firebase.child("recent-users");
     recentUsersRef.once("value", function(recentUsersSnap) {
       recentUsersSnap.forEach(function(recentUserSnap) {
@@ -568,7 +569,7 @@ Firefeed.prototype.setProfileField = function(field, value) {
  *                                   of reported sparks capped at totalCount.
  *                                   This will be called with one argument,
  *                                   the spark ID of the spark expected to
- *                                   removed (the oldest spark).    
+ *                                   removed (the oldest spark).
  */
 Firefeed.prototype.onNewSpark = function(totalCount, onComplete, onOverflow) {
   this._validateCallback(onComplete);
@@ -609,7 +610,7 @@ Firefeed.prototype.onNewSparkFor = function(id, count, onComplete, onOverflow) {
 }
 
 /**
- * Register a callback to get the latest sparks (default 5). The onComplete and 
+ * Register a callback to get the latest sparks (default 5). The onComplete and
  * onOverflow handlers will be invoked in the same manner as onNewSparkFor.
  *
  * You do not need to be authenticated to use this function.

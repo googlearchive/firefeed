@@ -29,15 +29,23 @@ FirefeedUI.prototype._setupHandlers = function() {
   var self = this;
   $(document).on("click", "a.profile-link", function(e) {
     e.preventDefault();
-    self.goProfile($(this).attr("href"));
+    self._go($(this).attr("href"));
   });
   $(document).on("click", "a.spark-link", function(e) {
     e.preventDefault();
-    self.goSpark($(this).attr("href"));
+    self._go($(this).attr("href"));
   });
   $(document).on("click", "#search-button", function(e) {
     e.preventDefault();
-    self._go("/?search=");
+    self._go("/?search");
+  });
+  $(document).on("click", "#top-logo", function(e) {
+    e.preventDefault();
+    self._go("/");
+  });
+  $(document).on("click", "#logout-button", function(e) {
+    e.preventDefault();
+    self.logout();
   });
 };
 
@@ -71,7 +79,6 @@ FirefeedUI.prototype._pageController = function(url) {
     case "search":
       this._unload = this.renderSearch();
       break;
-    case "timeline":
     default:
       if (this._loggedIn) {
         this._unload = this.renderTimeline(this._loggedIn);
@@ -261,8 +268,6 @@ FirefeedUI.prototype.renderSearch = function() {
 FirefeedUI.prototype.renderTimeline = function(info) {
   var self = this;
   $("#header").html(Mustache.to_html($("#tmpl-page-header").html(), {user: self._loggedIn}));
-  $("#top-logo").click(this.goHome.bind(this));
-  $("#logout-button").click(this.logout.bind(this));
 
   // Render placeholders for location / bio if not filled in.
   info.location = info.location.substr(0, 80) || "Your Location...";
@@ -330,14 +335,9 @@ FirefeedUI.prototype.renderTimeline = function(info) {
   return function() { self._firefeed.unload(); };
 };
 
-FirefeedUI.prototype.goProfile = function(uid) {
-  this._go(uid);
-};
-
 FirefeedUI.prototype.renderProfile = function(uid) {
   var self = this;
   $("#header").html(Mustache.to_html($("#tmpl-page-header").html(), {user: self._loggedIn}));
-  $("#top-logo").click(this.goHome.bind(this));
 
   // Render profile page body.
   $("#body").html(Mustache.to_html($("#tmpl-profile-body").html()));
@@ -399,14 +399,8 @@ FirefeedUI.prototype.renderProfile = function(uid) {
   return function() { self._firefeed.unload(); };
 };
 
-FirefeedUI.prototype.goSpark = function(id) {
-  this._go(id);
-};
-
 FirefeedUI.prototype.renderSpark = function(id) {
   $("#header").html(Mustache.to_html($("#tmpl-page-header").html(), {user: self._loggedIn}));
-  $("#top-logo").click(this.goHome.bind(this));
-  $("#logout-button").click(this.logout.bind(this));
 
   // Render spark page body.
   var self = this;
@@ -425,8 +419,7 @@ FirefeedUI.prototype.renderSpark = function(id) {
           classes: "cf", content: content
         });
         $("#body").html(body);
-      }, /*onFollower=*/ function() {}, /*onFollowersComplete=*/ function() {},
-        /*onFollowee=*/ function() {}, /*onFolloweesComplete=*/ function() {});
+      });
     }
   });
   return function() { self._firefeed.unload(); };

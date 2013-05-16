@@ -13,7 +13,7 @@
     <link href="css/global.css" rel="stylesheet" />
     <script src="//cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
   </head>
-  
+
   <body>
     <div id="wrapper">
 
@@ -64,14 +64,14 @@
             Twitter clone built with <a target="_blank" href="https://firebase.com">Firebase</a>.
           </h2>
           <p class="big-copy pushv8">Feel free to use and modify this in your own products and projects!</p>
-          
+
           <div id="login-div" class="pushv4">
             <a id="login-button" href="#" class="btn clean">
               <span class="icon facebook"></span>
               <span>Sign in with Facebook</span>
             </a>
           </div>
-          
+
           <div class="pushv4">
             <a href="about.html" class="btn default pushv4">Read more about Firefeed</a>
           </div>
@@ -107,9 +107,9 @@
           <div id="spark-button-div">
             <a id="spark-button" href="#" class="btn default full pushv4">Update Status</a>
           </div>
-          
+
           <div class="separator pushv4"></div>
-          
+
           <div id="suggested-users">
             <h3>We suggest you follow:</h3>
           </div>
@@ -122,24 +122,27 @@
 
       <script id="tmpl-search-content" type="text/html">
         <input class="text" type="text" id="search-input" />
-        <ul id="search-result-list" class="item-list">
+        <ul id="search-result-list" class="item-list third center">
         </ul>
       </script>
 
       <script id="tmpl-search-result" type="text/html">
         {{#results}}
         <li>
-          <div class="threefifth center aligncenter pushdn4">
-            <div class="comment pushv6">
-              <div class="huge-copy pushv2">{{name}}</div>
+          <a class="profile-link" href="/?profile={{userId}}">
+            <div class="media">
+              <div class="img avatar clean">
+                <a class="profile-link" href="/?profile={{userId}}">
+                  <img src="https://graph.facebook.com/{{userId}}/picture/?type=square&return_ssl_resources=1" alt="{{name}}" />
+                </a>
+              </div>
+              <div class="body ">
+                <a class="profile-link" href="/?profile={{userId}}">
+                  <p class="main-copy pushv">{{name}}</p>
+                </a>
+              </div>
             </div>
-
-            <div class="img avatar big pushv2 center">
-              <a class="profile-link" href="/?profile={{userId}}">
-                <img src="https://graph.facebook.com/{{userId}}/picture/?type=square&return_ssl_resources=1" alt="{{name}}" />
-              </a>
-            </div>
-          </div>
+          </a>
         </li>
         {{/results}}
       </script>
@@ -150,7 +153,7 @@
             <div class="huge-copy pushv2">{{content}}</div>
             <div class="meta">{{friendlyTimestamp}}</div>
           </div>
-          
+
           <div class="img avatar big pushv2 center">
             <a class="profile-link" href="/?profile={{author}}"><img src="{{pic}}" alt="{{by}}" /></a>
           </div>
@@ -253,7 +256,7 @@
         <li>Follow <a href="//twitter.com/firebase" target="_blank">@Firebase</a></li>
       </ul>
     </footer>
-  
+
     <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/jqueryui/1.9.2/jquery-ui.min.js"></script>
     <script src="./libs/jquery.jeditable.mini.js"></script>
