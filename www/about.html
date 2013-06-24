@@ -93,13 +93,23 @@
               calls:</p>
               <pre class="prettyprint lang_js">
 
-    var firebase = new Firebase("https://firefeed.firebaseio.com/");
-    var authClient = new FirebaseAuthClient(firebase);
-    authClient.login("facebook", function(err, token, info) {
-      if (!err) {
-        console.log("Got token " + token + " for user " + info.name);
-      }
-    });</pre><br/>
+var firebase = new Firebase("https://firefeed.firebaseio.com/");
+
+// monitor state changes and react to updates
+var authClient = new FirebaseAuthClient(chatRef, function(error, user) {
+    if (error) {
+        // an error occurred while attempting login
+        console.log(error);
+    } else if (user) {
+        // user authenticated with Firebase
+        console.log('User ID: ' + user.id + ', Provider: ' + user.provider);
+    } else {
+        // user is logged out
+    }
+});
+
+// perform the login (to Facebook in this case)
+authClient.login('facebook');</pre><br/>
               <p>That's it! We now have a Firebase token for the user
               who just logged in and authenticated our Firebase reference with it.</p>
               <hr/>
