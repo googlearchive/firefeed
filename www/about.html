@@ -96,7 +96,7 @@
 var firebase = new Firebase("https://firefeed.firebaseio.com/");
 
 // monitor state changes and react to updates
-var authClient = new FirebaseAuthClient(chatRef, function(error, user) {
+var authClient = new FirebaseSimpleLogin(chatRef, function(error, user) {
     if (error) {
         // an error occurred while attempting login
         console.log(error);

@@ -34,7 +34,7 @@ function Firefeed(baseURL, newContext) {
   );
 
   this._authHandlers = [];
-  this._firebaseAuthClient = new FirebaseAuthClient(this._firebase, function(error, user) {
+  this._firebaseAuthClient = new FirebaseSimpleLogin(this._firebase, function(error, user) {
     self._onLoginStateChange(error, user);
   });
 }
@@ -131,7 +131,7 @@ Firefeed.prototype.onLoginStateChange = function(onLoginStateChange) {
 
 /**
  * Login a user using Firebase Simple Login, using the specified authentication
- * provider. Pass the optional 'rememberMe' argument to the FirebaseAuthClient
+ * provider. Pass the optional 'rememberMe' argument to the FirebaseSimpleLogin
  * in order to create a long-lasting session. If the user is successfully
  * authenticated, then the previously-configured callback will be invoked with
  * a null error and a user object.
