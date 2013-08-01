@@ -24,6 +24,12 @@ If you'd like to embed a feed like Firefeed into your app, we recommend
 importing firefeed.js and hooking it up to your own UI. Take a look at
 firefeed-ui for an example of how this is done!
 
+### iOS Client
+
+An iOS client is also available. Download the app from the
+[App Store](https://itunes.apple.com/us/app/ifirefeed/id645597646?mt=8&uo=4)
+and browse the [source](https://github.com/firebase/iFirefeed).
+
 Exercises for the reader
 ------------------------
 1. Implement unfollowing a user.
