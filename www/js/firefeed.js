@@ -1,3 +1,4 @@
+
 /**
  * The Firefeed object is the primary conduit to the data feed. It provides
  * functions to login a user, log them out, and most importantly, to register
