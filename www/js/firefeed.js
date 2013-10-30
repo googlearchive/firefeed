@@ -1,4 +1,3 @@
-
 /**
  * The Firefeed object is the primary conduit to the data feed. It provides
  * functions to login a user, log them out, and most importantly, to register
@@ -56,7 +55,7 @@ Firefeed.prototype = {
   },
   _getParameterByName: function(name) {
     var expr = "[?&]" + name + "=([^&]*)";
-    var match = RegExp().exec(window.location.search);
+    var match = RegExp(expr).exec(window.location.search);
     return match && decodeURIComponent(match[1].replace(/\+/g, " "));
   },
   _getPicURL: function(id, large) {
