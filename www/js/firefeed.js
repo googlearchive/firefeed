@@ -122,12 +122,7 @@ Firefeed.prototype.onLoginStateChange = function(onLoginStateChange) {
   var self = this;
   self._validateCallback(onLoginStateChange, true);
   this._authHandlers.push(onLoginStateChange);
-
-  // Immediate invoke the function once with current user information
-  setTimeout(function() {
-    onLoginStateChange(null, this._user);
-  }, 0);
-}
+};
 
 /**
  * Login a user using Firebase Simple Login, using the specified authentication
