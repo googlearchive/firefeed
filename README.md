@@ -13,6 +13,15 @@ HTML/CSS/JS files, of course.
 This is made possible by [Firebase](http://firebase.com/). A detailed explanation
 of how the app was built is [available here](http://firefeed.io/about.html).
 
+Developing on Nitrous.IO
+------------------------
+
+Start hacking on Firefeed on
+[Nitrous.IO](https://www.nitrous.io/?utm_source=github.com&utm_campaign=firefeed&utm_medium=hackonnitrous)
+in seconds:
+
+[![Hack firebase/firefeed on Nitrous.IO](https://d3o0mnbgv6k92a.cloudfront.net/assets/hack-l-v1-3cc067e71372f6045e1949af9d96095b.png)](https://www.nitrous.io/hack_button?source=embed&runtime=rails&repo=firebase%2Ffirefeed&file_to_open=README.nitrous.md)
+
 Navigating the Code
 -------------------
 The core application logic is in www/js/firefeed.js. It is hooked up to the
