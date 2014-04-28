@@ -1,0 +1,5 @@
+{
+  "firebase": "firefeed",
+  "public": "www",
+  "rules": "rules.json"
+}
