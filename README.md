@@ -26,7 +26,7 @@ Navigating the Code
 -------------------
 The core application logic is in www/js/firefeed.js. It is hooked up to the
 UI in www/index.html via www/js/firefeed-ui.js.
-[firefeed.js](http://github.com/firebase/firefeed/blob/master/firefeed.js) consists of 11
+[firefeed.js](http://github.com/firebase/firefeed/blob/master/www/js/firefeed.js) consists of 11
 public methods, all of which are documented with jsdoc.
 
 If you'd like to embed a feed like Firefeed into your app, we recommend
