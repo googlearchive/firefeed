@@ -164,6 +164,8 @@ Firefeed.prototype.logout = function() {
 
 Firefeed.prototype.onLogin = function(user) {
   var self = this;
+  if (!user) { return; }
+
   this._uid = user.uid;
   this._facebookId = user.facebook.id;
 
@@ -205,7 +207,7 @@ Firefeed.prototype.onLogin = function(user) {
       info = val;
     }
     peopleRef.child("presence").set("online");
-    info.id = self._ui;
+    info.id = self._uid;
     self._user = info;
 
     // Notify downstream listeners for new authenticated user state
