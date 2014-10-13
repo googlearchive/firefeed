@@ -21,6 +21,7 @@ function Firefeed(baseURL, newContext) {
   this._searchHandler = null;
   this._currentSearch = null;
   this._baseURL = baseURL;
+  this._loginCount = 0;
 
   // Every time we call firebaseRef.on, we need to remember to call .off,
   // when requested by the caller via unload(). We'll store our handlers
@@ -36,10 +37,6 @@ function Firefeed(baseURL, newContext) {
 
   this._authHandlers = [];
   this._firebase.onAuth(self._onLoginStateChange.bind(self));
-  // this._firebaseAuthClient = new FirebaseSimpleLogin(this._firebase, function(error, user) {
-  //
-  //   self._onLoginStateChange(error, user);
-  // });
 }
 Firefeed.prototype = {
   _validateCallback: function(cb, notInit) {
@@ -167,9 +164,13 @@ Firefeed.prototype.logout = function() {
  */
 
 Firefeed.prototype.onLogin = function(user) {
+  this._loginCount = this._loginCount + 1;
+  console.log(this._loginCount);
+  console.log(user);
+  debugger;
   var self = this;
   this._uid = user.uid;
-  this._facebookId = user.facebook.id;
+  //this._facebookId = user.facebook.id;
 
   // adapt model to old scheme
   var displayName = user.facebook.displayName.split(' ');
