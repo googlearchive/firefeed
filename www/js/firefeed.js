@@ -21,7 +21,6 @@ function Firefeed(baseURL, newContext) {
   this._searchHandler = null;
   this._currentSearch = null;
   this._baseURL = baseURL;
-  this._loginCount = 0;
 
   // Every time we call firebaseRef.on, we need to remember to call .off,
   // when requested by the caller via unload(). We'll store our handlers
@@ -164,10 +163,6 @@ Firefeed.prototype.logout = function() {
  */
 
 Firefeed.prototype.onLogin = function(user) {
-  this._loginCount = this._loginCount + 1;
-  console.log(this._loginCount);
-  console.log(user);
-  debugger;
   var self = this;
   this._uid = user.uid;
   //this._facebookId = user.facebook.id;
