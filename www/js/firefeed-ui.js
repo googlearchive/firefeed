@@ -8,7 +8,7 @@ function FirefeedUI() {
   this._limit = 141;
   this._loggedIn = false;
   this._spinner = new Spinner();
-  this._firefeed = new Firefeed("https://firefeed.firebaseIO.com/");
+  this._firefeed = new Firefeed("https://awesome-firebase.firebaseio.com/");
   this._unload = null;
 
   // Setup page navigation.
@@ -20,8 +20,8 @@ function FirefeedUI() {
     self._pageController(window.History.getState().hash, false);
   });
 
-  self._firefeed.onLoginStateChange(function(error, user) {
-    self.onLoginStateChange(error, user);
+  self._firefeed.onStateChange(function(user) {
+    self.onLoginStateChange(user);
   });
 }
 
@@ -159,7 +159,7 @@ FirefeedUI.prototype._editableHandler = function(id, value) {
   return true;
 };
 
-FirefeedUI.prototype.onLoginStateChange = function(error, info) {
+FirefeedUI.prototype.onLoginStateChange = function(info) {
   this._spinner.stop();
   this._loggedIn = info;
   $("#header").html(Mustache.to_html($("#tmpl-page-header").html(), {user: this._loggedIn}));
@@ -315,12 +315,16 @@ FirefeedUI.prototype.renderTimeline = function(info) {
     info.id = userid;
     $(Mustache.to_html($("#tmpl-suggested-user").html(), info)).
       appendTo("#suggested-users");
-    var button = $("#followBtn-" + userid);
+
+    //var button = $("#followBtn-" + userid);
+    var button = $('.btn-follow');
     // Fade out the suggested user if they were followed successfully.
     button.click(function(e) {
+      var $button = $(e.target);
+      var id = $button.data('id');
       e.preventDefault();
-      button.remove();
-      self._firefeed.follow(userid, function(err, done) {
+      $button.remove();
+      self._firefeed.follow(id, function(err, done) {
         // TODO FIXME: Check for errors!
         $("#followBox-" + userid).fadeOut(1500);
       });

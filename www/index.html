@@ -254,7 +254,7 @@
               <a class="profile-link" href="/?profile={{id}}">{{fullName}}</a>
             </p>
             <p class="copy pushv">{{bio}}</p>
-            <a href="#" id="followBtn-{{id}}" class="btn default small">Follow</a>
+            <a href="#" id="followBtn-{{id}}" data-id="{{id}}" class="btn default small btn-follow">Follow</a>
           </div>
         </div>
       </script>
@@ -272,6 +272,7 @@
     <script src="./libs/jquery.jeditable.mini.js"></script>
     <script src="./libs/history.adapter.jquery.js"></script>
     <script src="./libs/history.js"></script>
+    <script src="./libs/bind-polyfill.js"></script>
     <!--[if (gte IE 6)&(lte IE 8)]>
       <script src="//cdnjs.cloudflare.com/ajax/libs/selectivizr/1.0.2/selectivizr-min.js"></script>
     <![endif]-->
@@ -281,25 +282,24 @@
     <script src="//cdnjs.cloudflare.com/ajax/libs/spin.js/1.2.7/spin.min.js"></script>
 
     <!-- Firebase.js and auth client must be included before Firefeed -->
-    <script src="//cdn.firebase.com/v0/firebase.js"></script>
-    <script src="//cdn.firebase.com/v0/firebase-simple-login.js"></script>
+    <script src="https://cdn.firebase.com/js/client/1.1.2/firebase.js"></script>
 
     <!-- Finally, the Firefeed code -->
     <script src="js/firefeed-search.js"></script>
     <script src="js/firefeed.js"></script>
     <script src="js/firefeed-ui.js"></script>
-    
-    
+
+
     <!-- Google Analytics Tracking, change this for your website-->
     <script>
       (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
       (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
       m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
       })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-  
+
       ga('create', 'UA-37029006-1', 'firefeed.io');
       ga('send', 'pageview');
-    </script>    
+    </script>
 
   </body>
 </html>
