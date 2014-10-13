@@ -165,7 +165,7 @@ Firefeed.prototype.logout = function() {
 Firefeed.prototype.onLogin = function(user) {
   var self = this;
   this._uid = user.uid;
-  //this._facebookId = user.facebook.id;
+  this._facebookId = user.facebook.id;
 
   // adapt model to old scheme
   var displayName = user.facebook.displayName.split(' ');
