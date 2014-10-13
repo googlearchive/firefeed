@@ -3,7 +3,7 @@ var USER = "jasmine";
 var USER2 = "jasmine2";
 
 var TIMEOUT = 1000;
-var BASEURL = "https://awesome-firebase.firebaseio.com";
+var BASEURL = "https://firefeed-staging.firebaseio.com";
 
 // Replace $TOP_SECRET with the secret for BASEURL.
 var tokenGenerator = new FirebaseTokenGenerator('uTZgdJmwpcPqHtxqZ0gpNvqaODY2ELUYyGBfh3rb');
@@ -37,7 +37,7 @@ var helpers = {
 
   tokenGenerator: new FirebaseTokenGenerator('uTZgdJmwpcPqHtxqZ0gpNvqaODY2ELUYyGBfh3rb'),
 
-  BASEURL: 'https://awesome-firebase.firebaseio.com',
+  BASEURL: 'https://firefeed-staging.firebaseio.com',
 
   userOne: {
     id: 1,
