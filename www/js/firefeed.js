@@ -14,12 +14,13 @@
 function Firefeed(baseURL, newContext) {
   var self = this;
   this._name = null;
-  this._userid = null;
+  this._facebookId = null;
   this._firebase = null;
   this._mainUser = null;
   this._fullName = null;
   this._searchHandler = null;
   this._currentSearch = null;
+  this._baseURL = baseURL;
 
   // Every time we call firebaseRef.on, we need to remember to call .off,
   // when requested by the caller via unload(). We'll store our handlers
@@ -34,9 +35,7 @@ function Firefeed(baseURL, newContext) {
   );
 
   this._authHandlers = [];
-  this._firebaseAuthClient = new FirebaseSimpleLogin(this._firebase, function(error, user) {
-    self._onLoginStateChange(error, user);
-  });
+  this._firebase.onAuth(self._onLoginStateChange.bind(self));
 }
 Firefeed.prototype = {
   _validateCallback: function(cb, notInit) {
@@ -44,7 +43,7 @@ Firefeed.prototype = {
       throw new Error("Invalid onComplete callback provided");
     }
     if (!notInit) {
-      if (!this._userid || !this._firebase) {
+      if (!this._uid || !this._firebase) {
         throw new Error("Method called without a preceding login() call");
       }
     }
@@ -60,7 +59,10 @@ Firefeed.prototype = {
     return match && decodeURIComponent(match[1].replace(/\+/g, " "));
   },
   _getPicURL: function(id, large) {
-    return "https://graph.facebook.com/" + (id || this._userid) +
+    if (id) {
+      id = id.replace('facebook:', '');
+    }
+    return "https://graph.facebook.com/" + (id || this._uid.replace('facebook:', '')) +
            "/picture/?type=" + (large ? "large" : "square") +
            "&return_ssl_resources=1";
   },
@@ -96,18 +98,19 @@ Firefeed.prototype = {
       ref: feed, handler: handler, eventType: "child_removed"
     });
   },
-  _onLoginStateChange: function(error, user) {
+  _onLoginStateChange: function(user) {
+
     var self = this;
-    if (error) {
-      // An error occurred while authenticating the user.
-      this.handleLogout();
-    } else if (user) {
+    if (user) {
       // The user is successfully logged in.
       this.onLogin(user);
     } else {
       // No existing session found - the user is logged out.
       this.onLogout();
     }
+  },
+  onStateChange: function(cb) {
+    this._firebase.onAuth(cb.bind(this));
   }
 };
 
@@ -134,9 +137,7 @@ Firefeed.prototype.onLoginStateChange = function(onLoginStateChange) {
  * @param    {string}    provider    The authentication provider to use.
  */
 Firefeed.prototype.login = function(provider) {
-  this._firebaseAuthClient.login(provider, {
-    'rememberMe': true
-  });
+  this._firebase.authWithOAuthPopup(provider, this.onLogin.bind(this));
 };
 
 /**
@@ -146,12 +147,12 @@ Firefeed.prototype.login = function(provider) {
  * permitted, as configured by security rules.
  */
 Firefeed.prototype.logout = function() {
-  if (this._userid) {
+  if (this._uid) {
     // Set presence to offline, reset all instance variables, and return!
-    var peopleRef = this._firebase.child("people").child(this._userid);
+    var peopleRef = this._firebase.child("people").child(this._uid);
     peopleRef.child("presence").set("offline");
   }
-  this._firebaseAuthClient.logout();
+  this._firebase.unauth();
 };
 
 /**
@@ -160,9 +161,23 @@ Firefeed.prototype.logout = function() {
  * sessions the user using a combination of browser cookies and local storage
  * so there is no need to do any additional sessioning here.
  */
+
 Firefeed.prototype.onLogin = function(user) {
   var self = this;
-  this._userid = user.id;
+  if (!user) { return; }
+
+  this._uid = user.uid;
+  this._facebookId = user.facebook.id;
+
+  // adapt model to old scheme
+  var displayName = user.facebook.displayName.split(' ');
+  user.first_name = displayName[0];
+  user.last_name = displayName[displayName.length - 1];
+  user.id = user.facebook.id;
+  user.name = user.facebook.displayName;
+  user.location = '';
+  user.bio = '';
+  user.pic = this._getPicURL(user.id, false);
 
   // Populate search index
   var firstNameKey = [user['first_name'], user['last_name'], user['id']].join('|').toLowerCase();
@@ -170,26 +185,29 @@ Firefeed.prototype.onLogin = function(user) {
   this._firebase.child('search/firstName').child(firstNameKey).set(user['id']);
   this._firebase.child('search/lastName').child(lastNameKey).set(user['id']);
 
-  this._mainUser = self._firebase.child("users").child(self._userid);
+  this._mainUser = self._firebase.child("users").child(this._uid);
   this._fullName = user.name;
   this._name = user.first_name;
 
-  var peopleRef = self._firebase.child("people").child(self._userid);
+  var peopleRef = self._firebase.child("people").child(this._uid);
   peopleRef.once("value", function(peopleSnap) {
     var info = {};
     var val = peopleSnap.val();
     if (!val) {
       // If this is a first time login, upload user details.
       info = {
-        name: self._name, fullName: self._fullName,
-        location: "", bio: "", pic: self._getPicURL()
+        name: self._name,
+        fullName: self._fullName,
+        location: "",
+        bio: "",
+        pic: self._getPicURL()
       };
       peopleRef.set(info);
     } else {
       info = val;
     }
     peopleRef.child("presence").set("online");
-    info.id = self._userid;
+    info.id = self._uid;
     self._user = info;
 
     // Notify downstream listeners for new authenticated user state
@@ -206,7 +224,7 @@ Firefeed.prototype.onLogin = function(user) {
  */
 Firefeed.prototype.onLogout = function() {
   this._user = null;
-  this._userid = null;
+  this._facebookId = null;
   this._mainUser = null;
   this._fullName = null;
   this._name = null;
@@ -367,7 +385,7 @@ Firefeed.prototype.follow = function(user, onComplete) {
 
     // Then, we add the current user to the followers list of user just followed.
     var followUser = self._firebase.child("users").child(user);
-    followUser.child("followers").child(self._userid).set(true);
+    followUser.child("followers").child(self._uid).set(true);
 
     // Last, we copy all previous sparks generated by the user just followed
     // to the feed of the current user so they will be displayed.
@@ -403,9 +421,8 @@ Firefeed.prototype.post = function(content, onComplete) {
   // we get a unique ID for the spark that is chronologically ordered.
   var sparkRef = self._firebase.child("sparks").push();
   var sparkRefId = sparkRef.name();
-
   var spark = {
-    author: self._userid,
+    author: self._uid, // uid for v2 security rules
     by: self._fullName,
     content: content,
     timestamp: new Date().getTime()
@@ -433,7 +450,8 @@ Firefeed.prototype.post = function(content, onComplete) {
       // activity which we can use elsewhere to see "active" users.
       var time = new Date().getTime();
       var recentUsersRef = self._firebase.child("recent-users");
-      recentUsersRef.child(self._userid).setWithPriority(true, time);
+
+      recentUsersRef.child(self._uid).setWithPriority(true, time);
 
       // We'll also add the spark to a separate list of most recent sparks
       // which can be displayed elsewhere, just like active users above.
@@ -500,7 +518,7 @@ Firefeed.prototype.getSuggestedUsers = function(onSuggestedUser) {
           return true; // Stop enumerating.
         }
         var userid = recentUserSnap.name();
-        if (userid == self._userid || followerList.indexOf(userid) >= 0) {
+        if (userid == self._uid || followerList.indexOf(userid) >= 0) {
           return; // Skip this one.
         }
         count++;
@@ -520,7 +538,7 @@ Firefeed.prototype.getSuggestedUsers = function(onSuggestedUser) {
  * @param    {Object}    value       The new value to write.
  */
 Firefeed.prototype.setProfileField = function(field, value) {
-  var peopleRef = this._firebase.child("people").child(this._userid);
+  var peopleRef = this._firebase.child("people").child(this._uid);
   peopleRef.child(field).set(value);
 };
 

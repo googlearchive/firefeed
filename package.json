@@ -1,0 +1,32 @@
+{
+  "name": "firefeed",
+  "version": "0.1.0",
+  "description": "Firefeed is a web app that lets users post small messages called sparks to their feed. You can follow other users, and their sparks will appear on your feed.",
+  "main": "gulpfile.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "start": "gulp serve",
+    "build": "gulp"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/firebase/firefeed.git"
+  },
+  "keywords": [
+    "firebase",
+    "twitter clone"
+  ],
+  "author": "Firebase",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/firebase/firefeed/issues"
+  },
+  "homepage": "https://github.com/firebase/firefeed",
+  "dependencies": {
+    "gulp": "^3.8.8",
+    "gulp-connect": "^2.0.6",
+    "gulp-open": "^0.2.8"
+  }
+}
