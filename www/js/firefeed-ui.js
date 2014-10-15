@@ -341,6 +341,7 @@ FirefeedUI.prototype.renderTimeline = function(info) {
 
 FirefeedUI.prototype.renderProfile = function(uid) {
   var self = this;
+  var facebookId = uid.replace('facebook:', '');
   $("#header").html(Mustache.to_html($("#tmpl-page-header").html(), {user: self._loggedIn}));
 
   // Render profile page body.
@@ -363,15 +364,18 @@ FirefeedUI.prototype.renderProfile = function(uid) {
     info.id = uid;
     var content = Mustache.to_html($("#tmpl-profile-content").html(), info);
     $("#profile-content").html(content);
-    var button = $("#followBtn-" + info.id);
+    var button = $('.btn-follow');
 
     // Show follow button if logged in.
     if (self._loggedIn && self._loggedIn.id != info.id) {
       button.click(function(e) {
+        var $clickedButton = $(e.target);
+        var clickedButtonId = $clickedButton.data('id');
         e.preventDefault();
-        self._firefeed.follow(info.id, function(err, done) {
+
+        self._firefeed.follow(clickedButtonId, function(err, done) {
           // TODO FIXME: Check for errors!
-          $("#followBtn-" + info.id).fadeOut(1500);
+          $clickedButton.fadeOut(1500);
         });
       });
     } else {
