@@ -24,5 +24,9 @@
     "url": "https://github.com/firebase/firefeed/issues"
   },
   "homepage": "https://github.com/firebase/firefeed",
-  "dependencies": {}
+  "dependencies": {
+    "gulp": "^3.8.8",
+    "gulp-connect": "^2.0.6",
+    "gulp-open": "^0.2.8"
+  }
 }
